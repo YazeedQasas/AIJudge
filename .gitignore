@@ -1,0 +1,25 @@
+# ---- Python (backend) ----
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Secrets / environment ----
+.env
+.env.*
+!.env.example
+
+# ---- Node / Angular (frontend also has its own .gitignore) ----
+node_modules/
+dist/
+/frontend/.angular/cache
+
+# ---- Editor / OS junk ----
+.DS_Store
+Thumbs.db
+*.stackdump

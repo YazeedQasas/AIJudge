@@ -1,0 +1,132 @@
+<div class="mx-auto max-w-3xl px-6 py-10">
+  <!-- Header -->
+  <div class="flex items-start gap-4">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-slate-700 to-slate-900 text-2xl text-white shadow-lg shadow-slate-500/25">
+      📊
+    </span>
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900">لوحة المعلومات</h1>
+      <p class="mt-1 text-sm text-slate-500">نظرة حيّة على مجموعة الوثائق والخدمات الخلفية.</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="mt-8 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
+      <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-500"></span>
+      جارٍ التحميل...
+    </div>
+  }
+
+  @if (error()) {
+    <p class="mt-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <span class="text-base">⚠</span>{{ error() }}
+    </p>
+  }
+
+  @if (data(); as result) {
+    <!-- Overall status banner -->
+    @let allHealthy = result.health.qdrant && result.health.lm_studio;
+    <div
+      class="mt-8 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-sm"
+      [class.border-emerald-200]="allHealthy"
+      [class.bg-emerald-50]="allHealthy"
+      [class.border-amber-200]="!allHealthy"
+      [class.bg-amber-50]="!allHealthy"
+    >
+      <span
+        class="flex h-9 w-9 items-center justify-center rounded-full text-lg"
+        [class.bg-emerald-100]="allHealthy"
+        [class.text-emerald-600]="allHealthy"
+        [class.bg-amber-100]="!allHealthy"
+        [class.text-amber-600]="!allHealthy"
+      >{{ allHealthy ? '✓' : '!' }}</span>
+      <div>
+        <div class="text-sm font-semibold" [class.text-emerald-800]="allHealthy" [class.text-amber-800]="!allHealthy">
+          {{ allHealthy ? 'جميع الأنظمة تعمل' : 'بعض الخدمات غير متاحة' }}
+        </div>
+        <div class="text-xs" [class.text-emerald-600]="allHealthy" [class.text-amber-600]="!allHealthy">
+          {{ allHealthy ? 'مخزن المتجهات وخادم النموذج كلاهما يستجيب.' : 'تأكّد من أن Qdrant وLM Studio قيد التشغيل.' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Corpus stats -->
+    <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">مجموعة الوثائق</h2>
+    <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div class="h-1 bg-linear-to-r from-indigo-500 to-violet-500"></div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+            <span>📄</span> الوثائق
+          </div>
+          <div class="mt-2 text-3xl font-bold text-slate-900">{{ result.corpus.document_count }}</div>
+        </div>
+      </div>
+      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div class="h-1 bg-linear-to-r from-violet-500 to-fuchsia-500"></div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+            <span>🧩</span> المقاطع
+          </div>
+          <div class="mt-2 text-3xl font-bold text-slate-900">{{ result.corpus.chunk_count }}</div>
+        </div>
+      </div>
+      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div class="h-1 bg-linear-to-r from-fuchsia-500 to-pink-500"></div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+            <span>📐</span> متوسط المقاطع لكل وثيقة
+          </div>
+          <div class="mt-2 text-3xl font-bold text-slate-900">
+            {{ result.corpus.document_count ? (result.corpus.chunk_count / result.corpus.document_count).toFixed(1) : '—' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System health -->
+    <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">حالة النظام</h2>
+    <ul class="mt-3 space-y-2.5">
+      <li class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5">
+        <span class="relative flex h-3 w-3">
+          @if (result.health.qdrant) {
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+          }
+          <span class="relative inline-flex h-3 w-3 rounded-full" [class.bg-emerald-500]="result.health.qdrant" [class.bg-red-500]="!result.health.qdrant"></span>
+        </span>
+        <span class="font-medium text-slate-900" dir="ltr">Qdrant</span>
+        <span class="text-sm text-slate-500">مخزن المتجهات</span>
+        <span
+          class="ms-auto rounded-full px-2.5 py-0.5 text-xs font-medium"
+          [class.bg-emerald-50]="result.health.qdrant"
+          [class.text-emerald-700]="result.health.qdrant"
+          [class.ring-emerald-200]="result.health.qdrant"
+          [class.bg-red-50]="!result.health.qdrant"
+          [class.text-red-700]="!result.health.qdrant"
+          [class.ring-red-200]="!result.health.qdrant"
+          [class.ring-1]="true"
+        >{{ result.health.qdrant ? 'متاح' : 'غير متاح' }}</span>
+      </li>
+      <li class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5">
+        <span class="relative flex h-3 w-3">
+          @if (result.health.lm_studio) {
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+          }
+          <span class="relative inline-flex h-3 w-3 rounded-full" [class.bg-emerald-500]="result.health.lm_studio" [class.bg-red-500]="!result.health.lm_studio"></span>
+        </span>
+        <span class="font-medium text-slate-900" dir="ltr">LM Studio</span>
+        <span class="text-sm text-slate-500">خادم النموذج</span>
+        <span
+          class="ms-auto rounded-full px-2.5 py-0.5 text-xs font-medium"
+          [class.bg-emerald-50]="result.health.lm_studio"
+          [class.text-emerald-700]="result.health.lm_studio"
+          [class.ring-emerald-200]="result.health.lm_studio"
+          [class.bg-red-50]="!result.health.lm_studio"
+          [class.text-red-700]="!result.health.lm_studio"
+          [class.ring-red-200]="!result.health.lm_studio"
+          [class.ring-1]="true"
+        >{{ result.health.lm_studio ? 'متاح' : 'غير متاح' }}</span>
+      </li>
+    </ul>
+  }
+</div>

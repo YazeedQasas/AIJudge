@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: #f8fafc;
+}
+
+/* Styles for markdown rendered via [innerHTML] (e.g. .answer-text in the Ask page).
+   Component-scoped CSS can't reach content injected via [innerHTML], since Angular's
+   compiler never processes it — these rules must live here, unscoped. */
+.answer-text p {
+  margin: 0.6rem 0;
+}
+
+.answer-text p:first-child {
+  margin-top: 0;
+}
+
+.answer-text p:last-child {
+  margin-bottom: 0;
+}
+
+.answer-text ol,
+.answer-text ul {
+  padding-inline-start: 1.4rem;
+  margin: 0.6rem 0;
+}
+
+.answer-text li {
+  margin: 0.25rem 0;
+}
+
+.answer-text strong {
+  font-weight: 600;
+  color: #0f172a;
+}

@@ -1,0 +1,31 @@
+<nav class="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+  <div class="mx-auto flex max-w-4xl items-center gap-8 px-6 py-4">
+    <span class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+      <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm text-white">⚖</span>
+      القاضي الآلي
+    </span>
+
+    <div class="flex gap-1">
+      <a
+        routerLink="/ask"
+        routerLinkActive="bg-indigo-50 text-indigo-700"
+        class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+        >اسأل</a
+      >
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="bg-indigo-50 text-indigo-700"
+        class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+        >لوحة المعلومات</a
+      >
+      <a
+        routerLink="/resources"
+        routerLinkActive="bg-indigo-50 text-indigo-700"
+        class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+        >الوثائق</a
+      >
+    </div>
+  </div>
+</nav>
+
+<router-outlet></router-outlet>

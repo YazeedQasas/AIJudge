@@ -1,0 +1,118 @@
+<div class="mx-auto max-w-4xl px-6 py-10">
+  <h1 class="text-3xl font-bold tracking-tight text-slate-900">الوثائق</h1>
+  <p class="mt-2 text-sm text-slate-500">الوثائق والمقاطع المخزّنة حالياً في مخزن المتجهات.</p>
+
+  <!-- Semantic search -->
+  <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-900/5">
+    <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+      <span class="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-100 text-sm text-indigo-600">⌕</span>
+      بحث دلالي
+    </h2>
+    <p class="mt-1 text-xs text-slate-500">
+      ابحث في الوثائق بالمعنى لا بالكلمات المفتاحية — يُحوّل استعلامك إلى متجه ويُقارن بكل مقطع عبر تشابه جيب التمام.
+    </p>
+
+    <form (ngSubmit)="search()" class="mt-3 flex flex-wrap gap-2">
+      <input
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+        name="query"
+        type="text"
+        placeholder="مثال: ما الذي يجعل الوصية صحيحة؟"
+        class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+      />
+      <button
+        type="submit"
+        [disabled]="searching()"
+        class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-500/30 transition-all hover:from-indigo-700 hover:to-violet-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        @if (searching()) {
+          <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+        }
+        {{ searching() ? 'جارٍ البحث...' : 'بحث' }}
+      </button>
+      @if (searched()) {
+        <button
+          type="button"
+          (click)="clearSearch()"
+          class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
+        >
+          مسح
+        </button>
+      }
+    </form>
+
+    @if (searchError()) {
+      <p class="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <span class="text-base">⚠</span>{{ searchError() }}
+      </p>
+    }
+
+    @if (searched() && results().length === 0 && !searchError()) {
+      <p class="mt-3 text-sm text-slate-500">لا توجد مقاطع مطابقة.</p>
+    }
+
+    @if (results().length > 0) {
+      <ol class="mt-4 space-y-2">
+        @for (result of results(); track $index) {
+          <li class="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <div class="flex items-center justify-between gap-3">
+              <span class="truncate text-sm font-medium text-slate-800" dir="ltr">
+                {{ result.source }} <span class="font-normal text-slate-400">· مقطع {{ result.chunk_index }}</span>
+              </span>
+              <span class="flex shrink-0 items-center gap-2">
+                <span class="h-1.5 w-20 overflow-hidden rounded-full bg-slate-200">
+                  <span
+                    class="block h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500"
+                    [style.width.%]="result.score * 100"
+                  ></span>
+                </span>
+                <span class="text-xs font-medium tabular-nums text-slate-500">{{ result.score.toFixed(3) }}</span>
+              </span>
+            </div>
+            <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">{{ result.text }}</p>
+          </li>
+        }
+      </ol>
+    }
+  </div>
+
+  <!-- Document browser -->
+  <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">جميع الوثائق</h2>
+
+  @if (loading()) {
+    <p class="mt-3 text-sm text-slate-500">جارٍ التحميل...</p>
+  }
+
+  @if (error()) {
+    <p class="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error() }}</p>
+  }
+
+  <div class="mt-3 space-y-3">
+    @for (document of documents(); track document.source) {
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <button
+          class="flex w-full items-center gap-2 px-4 py-3 text-start text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
+          (click)="toggle(document.source)"
+        >
+          <span class="text-slate-400">{{ isExpanded(document.source) ? '▾' : '▸' }}</span>
+          <span dir="ltr">{{ document.source }}</span>
+          <span class="ms-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500"
+            >{{ document.chunks.length }} مقطع</span
+          >
+        </button>
+
+        @if (isExpanded(document.source)) {
+          <ul class="space-y-2 border-t border-slate-100 bg-slate-50 p-3">
+            @for (chunk of document.chunks; track chunk.id) {
+              <li class="rounded-lg border-s-4 border-indigo-500 bg-white px-3 py-2 shadow-sm">
+                <div class="text-xs text-slate-400">مقطع {{ chunk.chunk_index }} (معرّف النقطة {{ chunk.id }})</div>
+                <div class="mt-1 whitespace-pre-wrap text-sm text-slate-700">{{ chunk.text }}</div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </div>
+</div>
