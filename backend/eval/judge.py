@@ -94,7 +94,15 @@ class Judge(ABC):
 
 
 class LocalLLMJudge(Judge):
-    """Scores using a local LM Studio model (defaults to the app's served model)."""
+    """Scores using a local LM Studio model (defaults to the app's served model).
+
+    CAVEAT, and it is not a small one: by default this is the same model being judged.
+    A model shares its own blind spots - it cannot penalise a fabrication it would also
+    have made, and it tends to rate its own phrasing highly. Useful as a cheap,
+    offline, reproducible signal; not useful as the deciding evidence in a comparison
+    where one of the candidates is a fine-tune of the judge. That is what ClaudeJudge
+    is for.
+    """
 
     name = "local"
 
@@ -108,9 +116,97 @@ class LocalLLMJudge(Judge):
         return parse_rubric(raw)
 
 
+def _rubric_schema() -> dict:
+    """JSON schema for the rubric, derived from DIMENSIONS so it can't drift from it.
+
+    Uses enum rather than minimum/maximum: numeric range constraints aren't part of the
+    supported schema subset for structured outputs, whereas an explicit enum is.
+    """
+    return {
+        "type": "object",
+        "properties": {
+            **{dim: {"type": "integer", "enum": [1, 2, 3, 4, 5]} for dim in DIMENSIONS},
+            "reasoning": {"type": "string"},
+        },
+        "required": [*DIMENSIONS, "reasoning"],
+        "additionalProperties": False,
+    }
+
+
+class ClaudeJudge(Judge):
+    """Scores using Claude via the Anthropic API - an INDEPENDENT judge.
+
+    Independence is the entire point. When the comparison is "base model vs. a LoRA of
+    that same base model", a local judge from the same family is scoring two variants
+    of itself, and its agreement with either tells you less than it appears to.
+
+    Setup: pip install -r requirements-data.txt, then either export ANTHROPIC_API_KEY
+    or run `ant auth login` (the SDK finds a stored profile with no code change).
+
+    Three API details worth knowing, because two of them are traps:
+
+    1. NO temperature / top_p / top_k. Those parameters were removed on this model
+       generation and sending one returns a 400. LocalLLMJudge above passes
+       temperature 0 and a seed - correct for LM Studio, fatal here. Determinism comes
+       from the prompt and the schema instead, so a Claude-judged run is less bit-wise
+       reproducible than a local one. That is the trade for an unbiased judge; note it
+       when comparing scorecards produced by different judges.
+
+    2. Check stop_reason before reading content. A refusal returns HTTP 200 with an
+       empty content list, so indexing content[0] blindly raises an unrelated
+       IndexError several frames from the real cause.
+
+    3. No fallback model, deliberately. The API can re-run a refused request on a
+       different model automatically, which is usually what you want and is exactly
+       wrong here: a judge is a measuring instrument, and silently swapping the
+       instrument partway through a run makes the resulting column incomparable.
+       Better to fail loudly on the case and leave the rest of the scorecard honest.
+    """
+
+    name = "claude"
+
+    def __init__(self, model: str = "claude-opus-5", max_tokens: int = 2048):
+        # Imported lazily so the local judge keeps working without the extra dependency.
+        try:
+            from anthropic import AsyncAnthropic
+        except ModuleNotFoundError as exc:
+            raise ModuleNotFoundError(
+                "The 'claude' judge needs the anthropic SDK, which is deliberately not a "
+                "runtime dependency. Install it with:\n"
+                "    pip install -r requirements-data.txt\n"
+                "then authenticate with either `export ANTHROPIC_API_KEY=...` or `ant auth login`."
+            ) from exc
+
+        self.model = model
+        self.max_tokens = max_tokens
+        # No arguments: resolves ANTHROPIC_API_KEY, then ANTHROPIC_AUTH_TOKEN, then an
+        # `ant auth login` profile. Never hardcode a key, and don't put one in
+        # app/config.py - that is runtime config, and this is an offline tool.
+        self._client = AsyncAnthropic()
+
+    async def score(self, *, question: str, sources_block: str, answer: str) -> RubricScore:
+        response = await self._client.messages.create(
+            model=self.model,
+            max_tokens=self.max_tokens,
+            thinking={"type": "adaptive"},
+            output_config={"format": {"type": "json_schema", "schema": _rubric_schema()}},
+            messages=[
+                {"role": "user", "content": build_judge_prompt(question, sources_block, answer)}
+            ],
+        )
+        if response.stop_reason == "refusal":
+            raise RuntimeError(f"Claude judge declined to score: {response.stop_details}")
+        text = next((b.text for b in response.content if b.type == "text"), "")
+        # Still routed through the shared parser: the schema guarantees the shape, and
+        # parse_rubric keeps the clamping and the missing-dimension check in one place
+        # for every judge.
+        return parse_rubric(text)
+
+
 # Registry: adding a judge is one line here (plus its class above).
 JUDGES: dict[str, type[Judge]] = {
     "local": LocalLLMJudge,
+    "claude": ClaudeJudge,
 }
 
 

@@ -185,6 +185,34 @@ npm test          # Vitest
 
 - Sample corpus is a handful of short, general legal overviews — **not** authoritative law.
 - Chunking is naive fixed-size character splitting; it can cut mid-sentence.
-- The relevance threshold is an un-calibrated heuristic.
+- **The relevance threshold is an un-calibrated heuristic, and measurably miscalibrated.**
+  See below.
 - Prompt and answers are Arabic-only.
 - No authentication, rate limiting, persistence beyond Qdrant, or conversational memory.
+
+### The relevance threshold is refusing answerable questions
+
+`min_relevance_score` is `0.5`. Probing the corpus with questions it demonstrably
+answers turns up false refusals — the gate fires and the user is told there isn't
+enough information, when the answer is sitting in a retrieved document:
+
+| Question | Top score | Where the answer actually is |
+|---|---:|---|
+| ما المعيار الحاكم في إسناد الحضانة؟ | 0.491 | `family_law_overview` §4 — the section *is* الحضانة / المصلحة الفضلى |
+| من هو الحامل حسن النية؟ | 0.444 | `negotiable_instruments_overview` §3 — the section *is* الحامل حسن النية |
+| ما حكم تعسف المالك في استعمال حقه؟ | 0.497 | `property_law_overview` §4 — states the rule verbatim |
+
+The two populations aren't cleanly separated at 0.5 in either direction: a genuinely
+out-of-corpus question about bankruptcy priority scores **0.484**, above two of the
+answerable questions above. Answerable questions land roughly 0.44–0.73 and
+out-of-corpus ones roughly 0.26–0.48, and those ranges overlap.
+
+Nothing here has been tuned — 0.5 was a guess, and it is the one number in the
+pipeline that has never been calibrated against data. Doing it properly means
+probing both populations, plotting the distributions, and picking the separation
+point, rather than nudging the constant until a particular question behaves.
+
+Deliberately left at 0.5 for now so the committed eval baseline measures the system
+as it actually behaves. `eval/cases.yaml` includes `refused` cases spanning
+0.26–0.48 specifically so that moving this threshold shows up as a scorecard change
+rather than a silent one.

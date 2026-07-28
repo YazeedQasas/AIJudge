@@ -1,0 +1,16 @@
+# Offline tooling only - NOT needed to run the server.
+#
+# requirements.txt stays at five packages on purpose: `pip install -r requirements.txt`
+# must always produce a working API. Anything that exists only to evaluate or to build
+# training data lives here instead, so the runtime surface never grows by accident.
+#
+#   pip install -r requirements-data.txt
+#
+# Used by:
+#   eval/judge.py     ClaudeJudge - an independent judge, so a Gemma LoRA isn't being
+#                     graded by Gemma. Needs ANTHROPIC_API_KEY or `ant auth login`.
+#
+# Training dependencies (torch, transformers, peft, trl) are heavier still and belong
+# in a separate virtualenv - see requirements-train.txt when that lands.
+
+anthropic
