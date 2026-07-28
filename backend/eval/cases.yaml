@@ -1,33 +1,62 @@
 # Evaluation dataset for the AI Judge.
 #
-# A FIXED set of test questions, run identically against every prompt version so
-# scores are comparable. Each case says what we expect the judge to DO:
-#   should_refuse: true  -> question is outside the legal corpus; judge should decline.
-#   should_refuse: false -> question is answerable from the corpus; judge should answer
-#                           and ground it in cited sources.
+# A FIXED set of test questions, run identically against every (prompt x model)
+# variant so scores are comparable. Each case says what we expect to happen:
 #
-# Keep this list stable. Changing questions changes the yardstick and makes old
-# scores incomparable — add new cases rather than editing existing ones.
+#   expected: answered  -> the corpus covers this; answer it, cite sources, emit the
+#                          ruling line.
+#   expected: declined  -> retrieval WILL return sources (they clear the relevance
+#                          threshold) but they don't actually cover the question. The
+#                          model should say so, cite nothing, and not rule.
+#   expected: refused   -> nothing relevant exists; the retrieval gate fires before
+#                          any model runs and returns the canned string.
+#
+# "declined" is the interesting one and the reason this field isn't a boolean. It is
+# the only category where the MODEL's calibration is under test - "refused" is the
+# gate (code), "answered" is the normal path. See eval/scorers.py for the long version.
+#
+# Keep this list stable. Changing questions changes the yardstick and makes old scores
+# incomparable - add new cases rather than editing existing ones. These questions are
+# also permanently off-limits as training data (see training/ contamination guard):
+# a model trained on them would score well by memorising the test.
 
 cases:
+  # --- answered: the corpus covers this -------------------------------------------
   - id: contract-elements
     question: ما أركان العقد الصحيح؟
-    should_refuse: false
+    expected: answered
 
   - id: criminal-mental-element
     question: اشرح الركن المعنوي في القانون الجنائي
-    should_refuse: false
+    expected: answered
 
   - id: negligence-vs-intent
     question: ما الفرق بين الإهمال والقصد في المسؤولية التقصيرية؟
-    should_refuse: false
+    expected: answered
 
-  # Out-of-corpus: clearly not legal material. A well-behaved judge refuses rather
-  # than hallucinating an answer from outside the sources.
+  # --- declined: legal-sounding, retrieval bites, corpus doesn't cover it ----------
+  # These are legal enough that the embedding finds "related" chunks above the
+  # relevance threshold, so the gate does NOT fire and the model gets a promising-
+  # looking sources block for a question none of it answers. That is precisely the
+  # situation calibration is about.
+  #
+  # NOTE: whether each of these actually clears min_relevance_score is an empirical
+  # question about this corpus and embedding model. Verify against the A9 baseline
+  # records - any case that turns out to fire the gate should be relabelled
+  # "refused", since it is then testing the gate rather than the model.
+  - id: declined-arbitration
+    question: ما هي إجراءات التحكيم التجاري الدولي وفق اتفاقية نيويورك؟
+    expected: declined
+
+  - id: declined-tax-residency
+    question: كيف تُحدَّد الإقامة الضريبية للشركات متعددة الجنسيات؟
+    expected: declined
+
+  # --- refused: not legal material at all; the gate should fire --------------------
   - id: out-of-corpus-capital
     question: ما هي عاصمة اليابان؟
-    should_refuse: true
+    expected: refused
 
   - id: out-of-corpus-recipe
     question: كيف أطبخ المقلوبة؟
-    should_refuse: true
+    expected: refused

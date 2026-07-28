@@ -23,6 +23,7 @@ import itertools
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -30,11 +31,12 @@ from app.config import settings
 from app.embedding_client import embed_texts
 from app.generation import build_prompt, build_sources_block, find_invalid_citations
 from app.llm_client import get_completion
-from app.model_registry import load_model
-from app.prompt_registry import list_prompts, load_prompt
+from app.model_registry import ModelVersion, load_model
+from app.prompt_registry import PromptVersion, list_prompts, load_prompt
 from app.vector_store import search
 from eval.judge import DIMENSIONS, Judge, RubricScore, get_judge
-from eval.scorers import SCORERS, CaseResult
+from eval.records import RunRecord, new_run_id, record_path, utc_now, write_records
+from eval.scorers import SCORERS, CaseResult, expectation
 
 CASES_PATH = Path(__file__).parent / "cases.yaml"
 EVAL_SEED = 42  # fixed so the only thing that varies between runs is the variant
@@ -68,38 +70,78 @@ def load_cases() -> list[dict]:
     return yaml.safe_load(CASES_PATH.read_text(encoding="utf-8"))["cases"]
 
 
-async def run_case(case: dict, variant: Variant) -> CaseResult:
-    """Push one case through the real retrieval + generation pipeline for a variant."""
+def resolve(variant: Variant) -> tuple[PromptVersion, ModelVersion, dict[str, Any]]:
+    """Load the prompt and model a variant names, and the sampling params it runs with.
+
+    Same merge order as the API's _resolve(): the prompt owns sampling, a model card
+    may override it, and the fixed eval seed wins over both. Resolved once per variant
+    rather than per case - the API resolves per request, but within a variant these
+    never change, and rereading the files 60 times would only invite them to drift.
+    """
+    prompt = load_prompt(variant.prompt_version)
+    model = load_model(variant.model_id)
+    generation = {**prompt.generation, **model.generation_overrides, "seed": EVAL_SEED}
+    return prompt, model, generation
+
+
+async def run_case(
+    case: dict, prompt: PromptVersion, model: ModelVersion, generation: dict[str, Any]
+) -> tuple[CaseResult, str]:
+    """Push one case through the real retrieval + generation pipeline.
+
+    Returns the result and the exact sources block the model saw - the caller needs
+    that both for judging and for the run record, and rebuilding it later from the
+    chunks would risk it differing from what was actually sent.
+    """
     [vector] = await embed_texts([case["question"]])
     chunks = await search(vector, limit=SEARCH_LIMIT)
 
-    # Same refusal gate as the API: no chunks or weak top hit -> decline (no generation).
-    # Note this fires before any model runs, so it is identical across variants - it is
+    # Same refusal gate as the API: no chunks or weak top hit -> refuse (no generation).
+    # This fires before any model runs, so it is identical across variants - it is
     # code, not model behaviour, and no amount of fine-tuning can change it.
     if not chunks or chunks[0]["score"] < settings.min_relevance_score:
-        return CaseResult(answer="<refused>", sources=[], invalid_citations=[])
+        return CaseResult(answer="<refused>", sources=[], invalid_citations=[]), ""
 
-    prompt = load_prompt(variant.prompt_version)
-    model = load_model(variant.model_id)
+    sources_block = build_sources_block(chunks)
     rendered = build_prompt(case["question"], chunks, prompt)
-    # Same merge order as the API's _resolve(): prompt owns sampling, model may
-    # override it, and the fixed seed wins over both for reproducibility.
-    generation = {**prompt.generation, **model.generation_overrides, "seed": EVAL_SEED}
     answer = await get_completion(rendered, generation, model=model.model)
     invalid = find_invalid_citations(answer, len(chunks))
-    return CaseResult(answer=answer, sources=chunks, invalid_citations=invalid)
+    return CaseResult(answer=answer, sources=chunks, invalid_citations=invalid), sources_block
 
 
-async def evaluate(variant: Variant, cases: list[dict], judge: Judge | None) -> list[CaseRun]:
+def _source_summary(chunks: list[dict]) -> list[dict[str, Any]]:
+    """Trimmed source metadata for the record; the text already lives in sources_block."""
+    return [
+        {
+            "number": i + 1,
+            "source": chunk["payload"]["source"],
+            "chunk_index": chunk["payload"]["chunk_index"],
+            "score": chunk["score"],
+        }
+        for i, chunk in enumerate(chunks)
+    ]
+
+
+def _score_case(case: dict, result: CaseResult) -> dict[str, bool]:
+    """Every scorer that applies to this case, by name. Scorers that don't apply are
+    omitted rather than recorded as passing - absent and true are different facts."""
+    return {s.name: s.fn(case, result) for s in SCORERS if s.applies(case)}
+
+
+async def evaluate(
+    variant: Variant, cases: list[dict], judge: Judge | None, run_id: str
+) -> tuple[list[CaseRun], list[RunRecord]]:
     """Run all cases for a variant; score answered ones with the judge if provided."""
+    prompt, model, generation = resolve(variant)
     runs: list[CaseRun] = []
+    records: list[RunRecord] = []
+
     for case in cases:
         started = time.monotonic()
-        result = await run_case(case, variant)
+        result, sources_block = await run_case(case, prompt, model, generation)
 
         rubric: RubricScore | None = None
         if not result.refused and judge is not None:
-            sources_block = build_sources_block(result.sources)
             try:
                 rubric = await judge.score(
                     question=case["question"], sources_block=sources_block, answer=result.answer
@@ -108,11 +150,36 @@ async def evaluate(variant: Variant, cases: list[dict], judge: Judge | None) -> 
                 print(f"    judge error on {case['id']}: {exc}")
 
         elapsed = time.monotonic() - started
-        verdict = "refused" if result.refused else "answered"
+        verdict = "refused" if result.refused else ("declined" if result.declined else "answered")
         avg = f" | rubric {rubric.average:.2f}" if rubric else ""
-        print(f"  [{variant.label}] {case['id']:<24} {verdict:<9} ({elapsed:5.1f}s){avg}")
+        flag = "" if verdict == expectation(case) else f"  <- expected {expectation(case)}"
+        print(f"  [{variant.label}] {case['id']:<26} {verdict:<9} ({elapsed:5.1f}s){avg}{flag}")
+
         runs.append((case, result, rubric))
-    return runs
+        records.append(
+            RunRecord(
+                run_id=run_id,
+                timestamp=utc_now(),
+                variant=variant.label,
+                prompt_version=variant.prompt_version,
+                model_id=variant.model_id,
+                model=model.model,
+                generation=generation,
+                seed=EVAL_SEED,
+                case_id=case["id"],
+                question=case["question"],
+                expected=expectation(case),
+                sources=_source_summary(result.sources),
+                sources_block=sources_block,
+                answer=result.answer,
+                invalid_citations=result.invalid_citations,
+                refused=result.refused,
+                elapsed_seconds=round(elapsed, 2),
+                scorers=_score_case(case, result),
+                rubric={"scores": rubric.scores, "reasoning": rubric.reasoning} if rubric else None,
+            )
+        )
+    return runs, records
 
 
 def guardrail_card(runs: list[CaseRun]) -> dict[str, tuple[int, int]]:
@@ -138,20 +205,22 @@ def rubric_card(runs: list[CaseRun]) -> dict[str, float | None]:
 
 # Variant labels ("v2@lora_v1") are longer than bare versions were, so columns widened.
 _COL = 14
+# Wide enough for the longest scorer name ("no_citation_when_declining", 26).
+_NAME_COL = 30
 
 
 def print_guardrail_report(variants: list[Variant], cards: dict[str, dict]) -> None:
     # ASCII only in report output: the Windows console is cp1252 by default, where an
     # em dash renders as a replacement char. This text gets pasted into the README.
     print(f"\n{'=' * 72}\nGuardrails - binary pass/fail (seed={EVAL_SEED})\n{'=' * 72}")
-    header = f"{'metric':<22}{'kind':<10}" + "".join(f"{v.label:>{_COL}}" for v in variants)
+    header = f"{'metric':<{_NAME_COL}}{'kind':<10}" + "".join(f"{v.label:>{_COL}}" for v in variants)
     print(header + "\n" + "-" * len(header))
     for scorer in SCORERS:
         cells = ""
         for v in variants:
             passes, total = cards[v.label][scorer.name]
             cells += f"{f'{passes}/{total}':>{_COL}}"
-        print(f"{scorer.name:<22}{scorer.kind:<10}{cells}")
+        print(f"{scorer.name:<{_NAME_COL}}{scorer.kind:<10}{cells}")
 
 
 def print_rubric_report(variants: list[Variant], cards: dict[str, dict]) -> None:
@@ -179,6 +248,12 @@ async def main() -> None:
     )
     parser.add_argument("--judge", default="local", help="judge backend name (see eval/judge.py)")
     parser.add_argument("--no-judge", action="store_true", help="skip rubric scoring")
+    parser.add_argument(
+        "--label",
+        default="run",
+        help="prefix for the results file, e.g. --label baseline (default: run)",
+    )
+    parser.add_argument("--no-save", action="store_true", help="don't write a results file")
     args = parser.parse_args()
 
     prompt_versions = args.prompts or [p.version for p in list_prompts()]
@@ -198,16 +273,26 @@ async def main() -> None:
     cases = load_cases()
     judge_label = "none" if judge is None else judge.name
     labels = ", ".join(v.label for v in variants)
+    run_id = new_run_id()
+    path = record_path(run_id, args.label)
     print(f"Evaluating {len(cases)} cases | variants: {labels} | judge: {judge_label}")
+    print(f"run_id: {run_id}" + ("" if args.no_save else f" -> {path}"))
 
     all_runs: dict[str, list[CaseRun]] = {}
     for variant in variants:
         print(f"\n--- running {variant.label} ---")
-        all_runs[variant.label] = await evaluate(variant, cases, judge)
+        runs, records = await evaluate(variant, cases, judge, run_id)
+        all_runs[variant.label] = runs
+        # Flush per variant, not at the end: a long comparison that dies on variant 3
+        # should still leave variants 1 and 2 on disk.
+        if not args.no_save:
+            write_records(path, records)
 
     print_guardrail_report(variants, {v.label: guardrail_card(all_runs[v.label]) for v in variants})
     if judge is not None:
         print_rubric_report(variants, {v.label: rubric_card(all_runs[v.label]) for v in variants})
+    if not args.no_save:
+        print(f"\nRecords: {path}")
 
 
 if __name__ == "__main__":
