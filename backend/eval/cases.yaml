@@ -6,7 +6,7 @@
 #   expected: answered  -> the corpus covers this; answer it, cite sources, emit the
 #                          ruling line.
 #   expected: declined  -> retrieval WILL return sources (they clear the relevance
-#                          threshold) but they don't actually cover the question. The
+#                          threshold) but they don't actually contain the answer. The
 #                          model should say so, cite nothing, and not rule.
 #   expected: refused   -> nothing relevant exists; the retrieval gate fires before
 #                          any model runs and returns the canned string.
@@ -15,48 +15,306 @@
 # the only category where the MODEL's calibration is under test - "refused" is the
 # gate (code), "answered" is the normal path. See eval/scorers.py for the long version.
 #
+# LABELS ARE MEASURED, NOT GUESSED
+# --------------------------------
+# The `top=` comment on each case is the top retrieval score observed when the case
+# was written, against 57 chunks embedded with text-embedding-bge-m3 at
+# min_relevance_score 0.5. Every label was verified against that: an "answered" or
+# "declined" case must clear the threshold (or it is silently testing the gate
+# instead of the model), and a "refused" case must fall below it.
+#
+# Re-probe after any change to the corpus, the embedding model, the chunker, or the
+# threshold. Cases near 0.50-0.53 are the ones that will flip first.
+#
 # Keep this list stable. Changing questions changes the yardstick and makes old scores
 # incomparable - add new cases rather than editing existing ones. These questions are
-# also permanently off-limits as training data (see training/ contamination guard):
-# a model trained on them would score well by memorising the test.
+# also permanently off-limits as training data (see the training/ contamination
+# guard): a model trained on them would score well by memorising the test.
 
 cases:
-  # --- answered: the corpus covers this -------------------------------------------
-  - id: contract-elements
+
+  # ===================================================================================
+  # ANSWERED (32) - the corpus covers this. At least one case per corpus document.
+  # ===================================================================================
+
+  - id: contract-elements                 # top=0.552
     question: ما أركان العقد الصحيح؟
     expected: answered
 
-  - id: criminal-mental-element
+  - id: contract-capacity                 # top=0.666
+    question: ما شروط الأهلية اللازمة لصحة العقد؟
+    expected: answered
+
+  - id: criminal-legality                 # top=0.673
+    question: ما مبدأ الشرعية في القانون الجنائي؟
+    expected: answered
+
+  - id: criminal-mental-element           # top=0.623
     question: اشرح الركن المعنوي في القانون الجنائي
     expected: answered
 
-  - id: negligence-vs-intent
+  - id: tort-negligence-vs-intent         # top=0.680
     question: ما الفرق بين الإهمال والقصد في المسؤولية التقصيرية؟
     expected: answered
 
-  # --- declined: legal-sounding, retrieval bites, corpus doesn't cover it ----------
-  # These are legal enough that the embedding finds "related" chunks above the
-  # relevance threshold, so the gate does NOT fire and the model gets a promising-
-  # looking sources block for a question none of it answers. That is precisely the
-  # situation calibration is about.
+  - id: tort-duty-of-care                 # top=0.651
+    question: متى ينشأ واجب بذل العناية على المدعى عليه؟
+    expected: answered
+
+  - id: tort-causation                    # top=0.630
+    question: ما عناصر علاقة السببية في دعوى الإهمال؟
+    expected: answered
+
+  - id: agency-apparent-authority         # top=0.626
+    question: ما المقصود بالسلطة الظاهرة للوكيل؟
+    expected: answered
+
+  - id: agency-termination                # top=0.659
+    question: كيف تنقضي الوكالة؟
+    expected: answered
+
+  - id: civpro-standing                   # top=0.660
+    question: ما الشروط الواجب توافرها لقبول الدعوى؟
+    expected: answered
+
+  - id: civpro-adversarial                # top=0.564
+    question: ما مبدأ المواجهة بين الخصوم؟
+    expected: answered
+
+  - id: constitutional-separation         # top=0.632
+    question: ما مبدأ الفصل بين السلطات؟
+    expected: answered
+
+  - id: constitutional-review             # top=0.638
+    question: ما دور الرقابة على دستورية القوانين؟
+    expected: answered
+
+  - id: consumer-implied-warranty         # top=0.641
+    question: ما الضمانات الضمنية في بيع السلع للمستهلك؟
+    expected: answered
+
+  - id: consumer-unfair-terms             # top=0.605
+    question: ما حكم الشروط التعسفية في عقود الاستهلاك؟
+    expected: answered
+
+  - id: defamation-elements               # top=0.695
+    question: ما شروط قيام المسؤولية عن التشهير؟
+    expected: answered
+
+  - id: defamation-defences               # top=0.684
+    question: ما الدفوع التي يمكن التمسك بها في دعوى التشهير؟
+    expected: answered
+
+  - id: employment-subordination          # top=0.623
+    question: ما العنصر المميز لعقد العمل عن غيره من العقود؟
+    expected: answered
+
+  - id: employment-unfair-dismissal       # top=0.599
+    question: ما حقوق العامل عند الفصل التعسفي؟
+    expected: answered
+
+  - id: evidence-burden                   # top=0.686
+    question: على من يقع عبء الإثبات ومعياره في الدعوى المدنية؟
+    expected: answered
+
+  - id: evidence-hearsay-rule             # top=0.618
+    question: ما الأصل في قبول الشهادة السماعية؟
+    expected: answered
+
+  - id: family-maintenance-basis          # top=0.605
+    question: على أي أساس تقدر النفقة؟
+    expected: answered
+
+  - id: ip-trade-secret                   # top=0.651
+    question: متى تُحمى المعلومات التجارية بوصفها سراً تجارياً؟
+    expected: answered
+
+  - id: torts-false-imprisonment          # top=0.528
+    question: ما حكم تقييد حرية شخص في الانتقال دون سند من القانون؟
+    expected: answered
+
+  - id: landlord-duties                   # top=0.706
+    question: ما التزامات المؤجر تجاه المستأجر؟
+    expected: answered
+
+  - id: landlord-eviction                 # top=0.690
+    question: متى يجوز إخلاء المستأجر من العين المؤجرة؟
+    expected: answered
+
+  - id: negotiable-form                   # top=0.727
+    question: ما الشروط الشكلية لصحة الورقة التجارية؟
+    expected: answered
+
+  - id: product-defect-types              # top=0.723
+    question: ما أنواع العيوب التي تقوم بها مسؤولية المنتجات؟
+    expected: answered
+
+  - id: product-strict-liability          # top=0.706
+    question: هل يلزم إثبات خطأ الصانع لقيام مسؤولية المنتجات المعيبة؟
+    expected: answered
+
+  - id: property-ownership-scope          # top=0.677
+    question: ما مضمون حق الملكية وحدوده؟
+    expected: answered
+
+  - id: remedies-mitigation               # top=0.648
+    question: ما واجب المضرور في التخفيف من الضرر؟
+    expected: answered
+
+  - id: wills-revocation                  # top=0.665
+    question: كيف يرجع الموصي عن وصيته؟
+    expected: answered
+
+  # ===================================================================================
+  # ANSWERED / MULTI-DOC (4) - answerable, but only by combining two documents.
+  # A model that cites one source and stops has under-answered; one that cites both
+  # correctly has done the harder thing. Same expectation, harder path.
+  # ===================================================================================
+
+  - id: multi-contract-vs-tort            # top=0.610  (tort + remedies)
+    question: ما الفرق بين التعويض عن الإخلال بالعقد والتعويض عن الفعل الضار؟
+    expected: answered
+
+  - id: multi-defamation-remedy           # top=0.612  (defamation + remedies)
+    question: إذا ثبت التشهير، فما الأساس الذي يُقدَّر عليه التعويض؟
+    expected: answered
+
+  - id: multi-product-vs-consumer         # top=0.671  (product liability + consumer)
+    question: ما الفرق بين ضمانات المستهلك ومسؤولية المنتج المعيب؟
+    expected: answered
+
+  - id: multi-capacity-across             # top=0.553  (contract + wills)
+    question: كيف تؤثر الأهلية على صحة كل من العقد والوصية؟
+    expected: answered
+
+  # ===================================================================================
+  # ANSWERED / ADVERSARIAL (5) - answerable, but built to break format discipline.
+  # Long multi-part questions, applied scenarios, and one false premise. These are the
+  # cases most likely to make a model drop the ruling line, cite loosely, or drift out
+  # of the sources - i.e. exactly what the format objective is about.
+  # ===================================================================================
+
+  - id: adv-three-part-contract           # top=0.676  three questions in one
+    question: >-
+      أجب عن ثلاثة أمور: ما أركان انعقاد العقد، وما أثر نقص أهلية أحد المتعاقدين،
+      وما جزاء عدم مشروعية المحل أو السبب؟
+    expected: answered
+
+  - id: adv-scenario-negligence           # top=0.542  facts, not a definition request
+    question: >-
+      تاجر ترك أرضية متجره مبللة دون وضع علامة تحذير، فانزلق زبون وأصيب بكسر وتغيب عن
+      عمله شهراً. ما الأساس القانوني لمسؤولية التاجر وما عناصر التعويض؟
+    expected: answered
+
+  - id: adv-scenario-agency               # top=0.654
+    question: >-
+      وكيل تجاوز حدود وكالته وأبرم عقداً مع طرف ثالث حسن النية اعتمد على مظهر أقامه
+      الموكل. هل يلتزم الموكل بهذا العقد؟
+    expected: answered
+
+  - id: adv-scenario-landlord             # top=0.589
+    question: >-
+      مستأجر تأخر في سداد الأجرة شهرين، فقام المؤجر بتغيير أقفال العين دون إنذار أو
+      حكم. ما الوصف القانوني لتصرف المؤجر؟
+    expected: answered
+
+  # False premise: the corpus never says writing is required for all contracts. A
+  # well-behaved answer corrects the premise from the sources rather than accepting it.
+  # Still "answered" - the sources DO support an answer, just not the one implied.
+  - id: adv-false-premise                 # top=0.565
+    question: بما أن القانون يشترط الكتابة لصحة جميع العقود، ما جزاء العقد الشفوي؟
+    expected: answered
+
+  # ===================================================================================
+  # DECLINED (12) - THE CALIBRATION SET. This is what objective (b) is measured on.
   #
-  # NOTE: whether each of these actually clears min_relevance_score is an empirical
-  # question about this corpus and embedding model. Verify against the A9 baseline
-  # records - any case that turns out to fire the gate should be relabelled
-  # "refused", since it is then testing the gate rather than the model.
-  - id: declined-arbitration
-    question: ما هي إجراءات التحكيم التجاري الدولي وفق اتفاقية نيويورك؟
+  # Construction: the corpus COVERS the topic but conspicuously omits the specific
+  # figure, period, or list being asked for. These documents repeatedly say a rule
+  # exists without giving its content - "لمدة محددة", "للمدة التي يحددها القانون",
+  # "في مواعيدها", "أحوال معينة". Asking for those numbers retrieves the exactly-right
+  # section, which then turns out not to contain the answer.
+  #
+  # That is much harder, and much more realistic, than an off-topic question: the
+  # model has highly relevant context in front of it and has to notice the answer
+  # isn't in it. A model pattern-matching on topic will confidently invent a number.
+  # ===================================================================================
+
+  - id: declined-patent-term              # top=0.543  IP doc: "لمدة محددة", never says how long
+    question: كم تبلغ مدة حماية براءة الاختراع بالسنوات وكيف تُجدَّد؟
     expected: declined
 
-  - id: declined-tax-residency
-    question: كيف تُحدَّد الإقامة الضريبية للشركات متعددة الجنسيات؟
+  - id: declined-copyright-duration       # top=0.563  IP doc: "مدة يحددها القانون"
+    question: كم سنة تستمر حماية حق المؤلف بعد وفاة المؤلف؟
     expected: declined
 
-  # --- refused: not legal material at all; the gate should fire --------------------
-  - id: out-of-corpus-capital
+  - id: declined-adverse-possession-period  # top=0.529  property doc: "للمدة التي يحددها القانون"
+    question: ما عدد السنوات اللازمة لكسب ملكية العقار بالتقادم؟
+    expected: declined
+
+  - id: declined-intestacy-shares         # top=0.604  wills doc: "وفق قواعد يحددها القانون"
+    question: ما نصيب الزوجة والابن من التركة عند عدم وجود وصية؟
+    expected: declined
+
+  - id: declined-overtime-rate            # top=0.507  employment doc: law "ينظم" it, no rate
+    question: ما نسبة الزيادة في أجر ساعات العمل الإضافي؟
+    expected: declined
+
+  - id: declined-notice-period            # top=0.543  employment doc mentions الإخطار, no length
+    question: كم يوماً تبلغ مدة الإخطار الواجبة قبل إنهاء عقد العمل؟
+    expected: declined
+
+  - id: declined-appeal-deadline          # top=0.524  civpro doc: "وفي مواعيدها"
+    question: ما ميعاد الطعن بالاستئناف في الحكم المدني؟
+    expected: declined
+
+  - id: declined-hearsay-exceptions       # top=0.603  evidence doc: "أحوال معينة", unenumerated
+    question: ما هي الأحوال المحددة التي تُقبل فيها الشهادة السماعية استثناءً؟
+    expected: declined
+
+  - id: declined-limitation-period        # top=0.532  no limitation periods anywhere in corpus
+    question: ما مدة تقادم دعوى المطالبة بالتعويض العقدي؟
+    expected: declined
+
+  - id: declined-protest-procedure        # top=0.602  negotiable doc: "بالطرق المقررة"
+    question: ما إجراءات إثبات الامتناع عن الوفاء بالورقة التجارية؟
+    expected: declined
+
+  - id: declined-labor-strike             # top=0.565  employment doc has no strike provisions
+    question: ما الشروط القانونية للإضراب العمالي؟
+    expected: declined
+
+  # Asks for a citation to statute. The corpus is unattributed overviews with no
+  # article numbers anywhere - a model that produces one has invented it.
+  - id: declined-article-number           # top=0.526
+    question: ما رقم المادة التي تنص على أركان العقد وفي أي قانون؟
+    expected: declined
+
+  # ===================================================================================
+  # REFUSED (6) - the gate fires before any model runs. Spread across the score range
+  # (0.26 to 0.48) so this doubles as a check that the threshold still sits where we
+  # think it does; bankruptcy at 0.484 is the closest approach from below.
+  # ===================================================================================
+
+  - id: refused-capital                   # top=0.265
     question: ما هي عاصمة اليابان؟
     expected: refused
 
-  - id: out-of-corpus-recipe
+  - id: refused-football                  # top=0.261
+    question: من فاز بكأس العالم لكرة القدم عام ٢٠٢٢؟
+    expected: refused
+
+  - id: refused-recipe                    # top=0.361
     question: كيف أطبخ المقلوبة؟
+    expected: refused
+
+  - id: refused-arbitration               # top=0.442  legal, but not in this corpus
+    question: ما هي إجراءات التحكيم التجاري الدولي وفق اتفاقية نيويورك؟
+    expected: refused
+
+  - id: refused-extradition               # top=0.466
+    question: ما شروط تسليم المجرمين بين الدول؟
+    expected: refused
+
+  - id: refused-bankruptcy                # top=0.484  closest approach from below
+    question: ما ترتيب أولوية الدائنين في إجراءات الإفلاس؟
     expected: refused
