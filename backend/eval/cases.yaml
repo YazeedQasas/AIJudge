@@ -1,0 +1,33 @@
+# Evaluation dataset for the AI Judge.
+#
+# A FIXED set of test questions, run identically against every prompt version so
+# scores are comparable. Each case says what we expect the judge to DO:
+#   should_refuse: true  -> question is outside the legal corpus; judge should decline.
+#   should_refuse: false -> question is answerable from the corpus; judge should answer
+#                           and ground it in cited sources.
+#
+# Keep this list stable. Changing questions changes the yardstick and makes old
+# scores incomparable — add new cases rather than editing existing ones.
+
+cases:
+  - id: contract-elements
+    question: ما أركان العقد الصحيح؟
+    should_refuse: false
+
+  - id: criminal-mental-element
+    question: اشرح الركن المعنوي في القانون الجنائي
+    should_refuse: false
+
+  - id: negligence-vs-intent
+    question: ما الفرق بين الإهمال والقصد في المسؤولية التقصيرية؟
+    should_refuse: false
+
+  # Out-of-corpus: clearly not legal material. A well-behaved judge refuses rather
+  # than hallucinating an answer from outside the sources.
+  - id: out-of-corpus-capital
+    question: ما هي عاصمة اليابان؟
+    should_refuse: true
+
+  - id: out-of-corpus-recipe
+    question: كيف أطبخ المقلوبة؟
+    should_refuse: true

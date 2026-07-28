@@ -1,0 +1,237 @@
+<div class="mx-auto max-w-3xl px-6 py-10">
+  <!-- Header -->
+  <div class="flex items-start gap-4">
+    <span
+      class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-2xl text-white shadow-lg shadow-emerald-500/25"
+    >
+      🧪
+    </span>
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900">اختبار إصدارات النماذج</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        اختر إصدار الموجّه (Prompt)، اطرح سؤالاً، وقارن الأحكام الناتجة. يظهر أسفل كل حكم الإصدار
+        والنموذج والإعدادات التي أنتجته.
+      </p>
+    </div>
+  </div>
+
+  <!-- Version picker + question form -->
+  <form
+    (ngSubmit)="submit()"
+    class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-900/5 transition-shadow focus-within:shadow-md focus-within:ring-emerald-500/20"
+  >
+    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+      إصدار الموجّه
+    </label>
+    <select
+      [ngModel]="selectedVersion()"
+      (ngModelChange)="selectedVersion.set($event)"
+      name="version"
+      class="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+    >
+      @for (v of versions(); track v.version) {
+        <option [value]="v.version">{{ v.version }} — {{ v.model }}</option>
+      }
+    </select>
+
+    <!-- Metadata of the version currently picked, shown as soon as it's selected -->
+    @if (selectedPrompt(); as picked) {
+      <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          بيانات الإصدار
+        </h3>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <span
+            class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200"
+          >
+            {{ picked.version }}
+          </span>
+          <span
+            class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
+            dir="ltr"
+          >
+            {{ picked.name }}
+          </span>
+          @if (picked.model) {
+            <span
+              class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
+              dir="ltr"
+            >
+              {{ picked.model }}
+            </span>
+          }
+          @for (param of selectedParams(); track param.key) {
+            <span
+              class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200"
+              dir="ltr"
+            >
+              {{ param.key }}: {{ param.value }}
+            </span>
+          }
+        </div>
+        @if (picked.description) {
+          <p class="mt-2 text-xs leading-relaxed text-slate-500">{{ picked.description }}</p>
+        }
+      </div>
+    }
+
+    <textarea
+      [ngModel]="question()"
+      (ngModelChange)="question.set($event)"
+      name="question"
+      rows="3"
+      placeholder="اطرح سؤالاً لاختباره على الإصدار المحدد..."
+      class="mt-4 w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+    ></textarea>
+
+    <div class="mt-3 flex justify-end">
+      <button
+        type="submit"
+        [disabled]="loading() || versions().length === 0"
+        class="inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-500/30 transition-all hover:from-emerald-700 hover:to-teal-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        @if (loading()) {
+          <span
+            class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+          ></span>
+        }
+        {{ loading() ? 'جارٍ التوليد...' : 'ولّد الحكم' }}
+      </button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <p
+      class="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+    >
+      <span class="text-base">⚠</span>{{ error() }}
+    </p>
+  }
+
+  @if (stage(); as currentStage) {
+    <div
+      class="mt-6 flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm font-medium text-emerald-700"
+    >
+      <span class="flex gap-1">
+        <span
+          class="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.3s]"
+        ></span>
+        <span
+          class="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.15s]"
+        ></span>
+        <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-500"></span>
+      </span>
+      @switch (currentStage) {
+        @case ('embedding') {
+          جارٍ ترميز السؤال...
+        }
+        @case ('searching') {
+          جارٍ البحث في الوثائق...
+        }
+        @case ('generating') {
+          جارٍ توليد الحكم...
+        }
+        @default {
+          جارٍ العمل...
+        }
+      }
+    </div>
+  }
+
+  @if (answer()) {
+    <div
+      class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5"
+    >
+      <div class="h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+      <div class="p-6">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <span
+            class="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100 text-sm text-emerald-600"
+            >✦</span
+          >
+          الحكم
+        </h2>
+        <div
+          class="answer-text mt-3 text-sm leading-relaxed text-slate-700"
+          [innerHTML]="renderedAnswer()"
+        ></div>
+
+        @if (invalidCitations().length > 0) {
+          <p
+            class="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800"
+          >
+            <span class="text-base">⚠</span>
+            استشهد النموذج بأرقام مصادر غير موجودة: {{ invalidCitations().join('، ') }}
+          </p>
+        }
+
+        @if (sources().length > 0) {
+          <h3 class="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">المصادر</h3>
+          <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+            @for (source of sources(); track source.number) {
+              <li
+                class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 transition-colors hover:border-emerald-200 hover:bg-emerald-50/40"
+              >
+                <span
+                  class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-emerald-500 to-teal-600 text-xs font-semibold text-white"
+                >
+                  {{ source.number }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="truncate text-sm font-medium text-slate-800" dir="ltr">
+                    {{ source.source }}
+                  </div>
+                  <div class="mt-0.5 text-xs text-slate-500">مقطع {{ source.chunk_index }}</div>
+                  <div class="mt-1.5 flex items-center gap-2">
+                    <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+                      <span
+                        class="block h-full rounded-full bg-linear-to-r from-emerald-400 to-teal-500"
+                        [style.width.%]="source.score * 100"
+                      ></span>
+                    </span>
+                    <span class="text-xs font-medium tabular-nums text-slate-500">{{
+                      source.score.toFixed(2)
+                    }}</span>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- Which prompt version + model + params produced this verdict -->
+        @if (usedPrompt(); as used) {
+          <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              أُنتج بواسطة
+            </h3>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200"
+              >
+                {{ used.version }}
+              </span>
+              <span
+                class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
+                dir="ltr"
+              >
+                {{ used.model }}
+              </span>
+              @for (param of usedParams(); track param.key) {
+                <span
+                  class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200"
+                  dir="ltr"
+                >
+                  {{ param.key }}: {{ param.value }}
+                </span>
+              }
+            </div>
+            @if (used.description) {
+              <p class="mt-2 text-xs leading-relaxed text-slate-500">{{ used.description }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

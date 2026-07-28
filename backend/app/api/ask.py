@@ -9,6 +9,7 @@ from app.config import settings
 from app.embedding_client import embed_texts
 from app.generation import build_prompt, find_invalid_citations
 from app.llm_client import get_completion, stream_completion
+from app.prompt_registry import load_prompt
 from app.vector_store import search
 
 router = APIRouter()
@@ -17,6 +18,8 @@ router = APIRouter()
 class AskRequest(BaseModel):
     question: str
     limit: int = 5
+    # Optional per-request override. When None, settings.active_prompt_version is used.
+    prompt_version: str | None = None
 
 
 class Source(BaseModel):
@@ -30,6 +33,8 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[Source]
     invalid_citations: list[int] = []
+    # Which prompt version produced this answer. None for a refusal (no prompt was run).
+    prompt_version: str | None = None
 
 
 def _build_sources(chunks: list[dict]) -> list[Source]:
@@ -55,11 +60,17 @@ async def ask(request: AskRequest) -> AskResponse:
             sources=[],
         )
 
-    prompt = build_prompt(request.question, chunks)
-    answer = await get_completion(prompt)
+    prompt_version = load_prompt(request.prompt_version or settings.active_prompt_version)
+    prompt = build_prompt(request.question, chunks, prompt_version)
+    answer = await get_completion(prompt, prompt_version.generation)
     invalid_citations = find_invalid_citations(answer, len(chunks))
 
-    return AskResponse(answer=answer, sources=_build_sources(chunks), invalid_citations=invalid_citations)
+    return AskResponse(
+        answer=answer,
+        sources=_build_sources(chunks),
+        invalid_citations=invalid_citations,
+        prompt_version=prompt_version.version,
+    )
 
 
 def _sse(event: str, data: dict) -> str:
@@ -83,16 +94,28 @@ async def _ask_stream_events(request: AskRequest) -> AsyncIterator[str]:
         return
 
     yield _sse("stage", {"stage": "generating"})
-    prompt = build_prompt(request.question, chunks)
+    prompt_version = load_prompt(request.prompt_version or settings.active_prompt_version)
+    prompt = build_prompt(request.question, chunks, prompt_version)
 
     full_answer = ""
-    async for delta in stream_completion(prompt):
+    async for delta in stream_completion(prompt, prompt_version.generation):
         full_answer += delta
         yield _sse("token", {"text": delta})
 
     invalid_citations = find_invalid_citations(full_answer, len(chunks))
     sources = [source.model_dump() for source in _build_sources(chunks)]
-    yield _sse("done", {"sources": sources, "invalid_citations": invalid_citations})
+    yield _sse(
+        "done",
+        {
+            "sources": sources,
+            "invalid_citations": invalid_citations,
+            # Report the version AND the exact params/model that were just used, so the
+            # UI shows what actually ran — not a separately-fetched list that can drift.
+            "prompt_version": prompt_version.version,
+            "model": prompt_version.metadata.get("model"),
+            "generation": prompt_version.generation,
+        },
+    )
 
 
 @router.post("/ask/stream")

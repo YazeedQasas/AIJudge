@@ -1,37 +1,53 @@
 import json
 from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
 from app.config import settings
 
 
-async def get_completion(prompt: str) -> str:
+def _build_payload(
+    prompt: str, generation: dict[str, Any] | None, *, stream: bool, model: str | None = None
+) -> dict[str, Any]:
+    """Assemble the LM Studio request body, folding in per-version sampling params.
+
+    `generation` typically holds temperature/top_p/top_k from the active prompt version.
+    top_p/temperature are OpenAI-standard; top_k is an LM Studio extra it passes through.
+    `model` overrides the default served model (used by the eval judge to target another).
+    """
+    payload: dict[str, Any] = {
+        "model": model or settings.lm_studio_model,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    if stream:
+        payload["stream"] = True
+    if generation:
+        payload.update(generation)
+    return payload
+
+
+async def get_completion(
+    prompt: str, generation: dict[str, Any] | None = None, model: str | None = None
+) -> str:
     """Send a single-turn prompt to LM Studio and return the model's reply text."""
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=settings.llm_timeout_seconds) as client:
         response = await client.post(
             f"{settings.lm_studio_base_url}/chat/completions",
-            json={
-                "model": settings.lm_studio_model,
-                "messages": [{"role": "user", "content": prompt}],
-            },
+            json=_build_payload(prompt, generation, stream=False, model=model),
         )
         response.raise_for_status()
         data = response.json()
         return data["choices"][0]["message"]["content"]
 
 
-async def stream_completion(prompt: str) -> AsyncIterator[str]:
+async def stream_completion(prompt: str, generation: dict[str, Any] | None = None) -> AsyncIterator[str]:
     """Stream a completion from LM Studio, yielding text deltas as they're generated."""
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=settings.llm_timeout_seconds) as client:
         async with client.stream(
             "POST",
             f"{settings.lm_studio_base_url}/chat/completions",
-            json={
-                "model": settings.lm_studio_model,
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": True,
-            },
+            json=_build_payload(prompt, generation, stream=True),
         ) as response:
             response.raise_for_status()
             async for line in response.aiter_lines():

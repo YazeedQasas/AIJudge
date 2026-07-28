@@ -9,8 +9,17 @@ class Settings(BaseSettings):
     app_name: str = "AI Judge"
     debug: bool = False
 
+    # Prompt version used by default when a request doesn't override it. Rollback =
+    # point this at an older version (e.g. "v1") and restart. See app/prompts/.
+    active_prompt_version: str = "v1"
+
     lm_studio_base_url: str = "http://localhost:1234/v1"
     lm_studio_model: str = "google/gemma-4-e4b"
+    # Max seconds to wait on an LM Studio call. Generous because reasoning models
+    # (e.g. gemma) emit many "thinking" tokens first — a full non-streaming answer
+    # can take well over a minute. Too low here surfaces in the browser as a
+    # misleading CORS error (the 500 timeout response carries no CORS headers).
+    llm_timeout_seconds: float = 300.0
     lm_studio_embedding_model: str = "text-embedding-bge-m3"
     embedding_dimension: int = 1024
 
