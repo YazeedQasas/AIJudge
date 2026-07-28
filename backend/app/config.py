@@ -13,7 +13,15 @@ class Settings(BaseSettings):
     # point this at an older version (e.g. "v1") and restart. See app/prompts/.
     active_prompt_version: str = "v1"
 
+    # Model card used by default when a request doesn't override it. Same rollback
+    # story as the prompt version: swapping a fine-tune in or back out is this one
+    # value, not a code change. See app/models/.
+    active_model_id: str = "base"
+
     lm_studio_base_url: str = "http://localhost:1234/v1"
+    # Fallback served model, used when a call passes no explicit model (e.g. the eval
+    # judge, or embedding). Normal request traffic resolves its model from a card
+    # instead, so this should match whatever app/models/base.md declares.
     lm_studio_model: str = "google/gemma-4-e4b"
     # Max seconds to wait on an LM Studio call. Generous because reasoning models
     # (e.g. gemma) emit many "thinking" tokens first — a full non-streaming answer

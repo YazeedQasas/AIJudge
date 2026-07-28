@@ -13,13 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import yaml
+from app.frontmatter import split_frontmatter
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
-
-# Matches a leading YAML frontmatter block delimited by '---' fences, then the body.
-# Group 1 = the YAML between the fences; Group 2 = everything after the closing fence.
-_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)\Z", re.DOTALL)
 
 
 @dataclass(frozen=True)
@@ -41,19 +37,9 @@ class PromptVersion:
         return self.template.format(sources_block=sources_block, question=question)
 
 
-def _split_frontmatter(raw: str) -> tuple[dict[str, Any], str]:
-    """Split a prompt file's raw text into (metadata dict, template string)."""
-    match = _FRONTMATTER_RE.match(raw)
-    if match is None:
-        raise ValueError("Prompt file is missing a '---' YAML frontmatter block.")
-    metadata = yaml.safe_load(match.group(1)) or {}
-    template = match.group(2).strip()
-    return metadata, template
-
-
 def _load_file(path: Path) -> PromptVersion:
     """Parse one prompt file into a PromptVersion."""
-    metadata, template = _split_frontmatter(path.read_text(encoding="utf-8"))
+    metadata, template = split_frontmatter(path.read_text(encoding="utf-8"))
     return PromptVersion(
         version=metadata.get("version", path.stem),
         name=metadata.get("name", path.stem),

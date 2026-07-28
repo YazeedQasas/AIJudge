@@ -1,5 +1,6 @@
 import json
 from collections.abc import AsyncIterator
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -9,7 +10,8 @@ from app.config import settings
 from app.embedding_client import embed_texts
 from app.generation import build_prompt, find_invalid_citations
 from app.llm_client import get_completion, stream_completion
-from app.prompt_registry import load_prompt
+from app.model_registry import ModelVersion, load_model
+from app.prompt_registry import PromptVersion, load_prompt
 from app.vector_store import search
 
 router = APIRouter()
@@ -18,8 +20,10 @@ router = APIRouter()
 class AskRequest(BaseModel):
     question: str
     limit: int = 5
-    # Optional per-request override. When None, settings.active_prompt_version is used.
+    # Optional per-request overrides. When None, the settings defaults are used.
+    # These are the two axes an answer varies along: which wording, which weights.
     prompt_version: str | None = None
+    model_id: str | None = None
 
 
 class Source(BaseModel):
@@ -33,8 +37,24 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[Source]
     invalid_citations: list[int] = []
-    # Which prompt version produced this answer. None for a refusal (no prompt was run).
+    # What produced this answer. Both None for a refusal — the gate fires before any
+    # generation happens, so no prompt and no model were involved.
     prompt_version: str | None = None
+    model_id: str | None = None
+
+
+def _resolve(request: AskRequest) -> tuple[PromptVersion, ModelVersion, dict[str, Any]]:
+    """Resolve which prompt and which model this request runs on, plus its sampling params.
+
+    Sampling normally belongs to the prompt version, because the same wording behaves
+    differently at different settings. A model card can override it (a fine-tune may
+    want different settings than the wording was tuned at), which is why the merge
+    order is model-wins-over-prompt and not the reverse.
+    """
+    prompt_version = load_prompt(request.prompt_version or settings.active_prompt_version)
+    model_version = load_model(request.model_id or settings.active_model_id)
+    generation = {**prompt_version.generation, **model_version.generation_overrides}
+    return prompt_version, model_version, generation
 
 
 def _build_sources(chunks: list[dict]) -> list[Source]:
@@ -60,9 +80,9 @@ async def ask(request: AskRequest) -> AskResponse:
             sources=[],
         )
 
-    prompt_version = load_prompt(request.prompt_version or settings.active_prompt_version)
+    prompt_version, model_version, generation = _resolve(request)
     prompt = build_prompt(request.question, chunks, prompt_version)
-    answer = await get_completion(prompt, prompt_version.generation)
+    answer = await get_completion(prompt, generation, model=model_version.model)
     invalid_citations = find_invalid_citations(answer, len(chunks))
 
     return AskResponse(
@@ -70,6 +90,7 @@ async def ask(request: AskRequest) -> AskResponse:
         sources=_build_sources(chunks),
         invalid_citations=invalid_citations,
         prompt_version=prompt_version.version,
+        model_id=model_version.id,
     )
 
 
@@ -94,11 +115,11 @@ async def _ask_stream_events(request: AskRequest) -> AsyncIterator[str]:
         return
 
     yield _sse("stage", {"stage": "generating"})
-    prompt_version = load_prompt(request.prompt_version or settings.active_prompt_version)
+    prompt_version, model_version, generation = _resolve(request)
     prompt = build_prompt(request.question, chunks, prompt_version)
 
     full_answer = ""
-    async for delta in stream_completion(prompt, prompt_version.generation):
+    async for delta in stream_completion(prompt, generation, model=model_version.model):
         full_answer += delta
         yield _sse("token", {"text": delta})
 
@@ -109,11 +130,16 @@ async def _ask_stream_events(request: AskRequest) -> AsyncIterator[str]:
         {
             "sources": sources,
             "invalid_citations": invalid_citations,
-            # Report the version AND the exact params/model that were just used, so the
-            # UI shows what actually ran — not a separately-fetched list that can drift.
+            # Report the exact prompt, model, and params that were just used, so the UI
+            # shows what actually ran — not a separately-fetched list that can drift.
             "prompt_version": prompt_version.version,
-            "model": prompt_version.metadata.get("model"),
-            "generation": prompt_version.generation,
+            "model_id": model_version.id,
+            # The resolved served identifier, i.e. the string that went out on the wire.
+            # This used to read the prompt frontmatter's `model:`, which only records
+            # what the wording was *tuned against* — a declared value, free to drift
+            # from the model actually answering.
+            "model": model_version.model,
+            "generation": generation,
         },
     )
 

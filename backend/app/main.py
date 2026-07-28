@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import ask, chat, dashboard, health, prompts, resources, retrieve
+from app.api import ask, chat, dashboard, health, models, prompts, resources, retrieve
 
 from app.config import settings
 
@@ -21,3 +21,4 @@ app.include_router(ask.router)
 app.include_router(resources.router)
 app.include_router(dashboard.router)
 app.include_router(prompts.router)
+app.include_router(models.router)

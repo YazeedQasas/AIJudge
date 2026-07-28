@@ -14,7 +14,8 @@ def _build_payload(
 
     `generation` typically holds temperature/top_p/top_k from the active prompt version.
     top_p/temperature are OpenAI-standard; top_k is an LM Studio extra it passes through.
-    `model` overrides the default served model (used by the eval judge to target another).
+    `model` overrides the default served model — resolved from a model card (see
+    app/model_registry.py), or set directly by the eval judge to target another model.
     """
     payload: dict[str, Any] = {
         "model": model or settings.lm_studio_model,
@@ -41,13 +42,20 @@ async def get_completion(
         return data["choices"][0]["message"]["content"]
 
 
-async def stream_completion(prompt: str, generation: dict[str, Any] | None = None) -> AsyncIterator[str]:
-    """Stream a completion from LM Studio, yielding text deltas as they're generated."""
+async def stream_completion(
+    prompt: str, generation: dict[str, Any] | None = None, model: str | None = None
+) -> AsyncIterator[str]:
+    """Stream a completion from LM Studio, yielding text deltas as they're generated.
+
+    Takes the same `model` override as get_completion — the two paths must be able to
+    run the same request, or the Ask page and the eval could silently disagree about
+    which model answered.
+    """
     async with httpx.AsyncClient(timeout=settings.llm_timeout_seconds) as client:
         async with client.stream(
             "POST",
             f"{settings.lm_studio_base_url}/chat/completions",
-            json=_build_payload(prompt, generation, stream=True),
+            json=_build_payload(prompt, generation, stream=True, model=model),
         ) as response:
             response.raise_for_status()
             async for line in response.aiter_lines():
