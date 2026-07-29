@@ -23,3 +23,18 @@ dist/
 .DS_Store
 Thumbs.db
 *.stackdump
+
+# ---- Training subsystem (LoRA) - large downloads/builds, never committed ----
+backend/.venv-train/
+backend/.hf-cache/
+backend/.pip-cache/
+backend/training/runs/
+backend/training/tools/
+*.gguf
+*.safetensors
+
+# Raw/unreviewed dataset artifacts - the reviewed {train,val,manifest}.* files
+# ARE committed (see training/README.md); these are the noisy pool before review.
+backend/training/data/*/drafts.jsonl
+backend/training/data/*/auto_rejected.*.jsonl
+backend/training/data/*/expanded_questions.yaml

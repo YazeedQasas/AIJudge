@@ -59,9 +59,14 @@ export class Ask {
             this.streamedText.update((current) => current + event.text);
             break;
           case 'refused':
+            // Clear the stage banner as 'token' does: a refusal ends the stream
+            // without any token ever arriving, so nothing else would clear it.
+            this.stage.set(null);
             this.streamedText.set(event.answer);
             break;
           case 'done':
+            // Same guard for the case where generation streams no tokens at all.
+            this.stage.set(null);
             this.sources.set(event.sources);
             this.invalidCitations.set(event.invalid_citations);
             break;

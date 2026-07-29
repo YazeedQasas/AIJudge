@@ -28,12 +28,11 @@ from typing import Any
 import yaml
 
 from app.config import settings
-from app.embedding_client import embed_texts
 from app.generation import build_prompt, build_sources_block, find_invalid_citations
 from app.llm_client import get_completion
 from app.model_registry import ModelVersion, load_model
 from app.prompt_registry import PromptVersion, list_prompts, load_prompt
-from app.vector_store import search
+from app.retrieval import retrieve_chunks
 from eval.judge import DIMENSIONS, Judge, RubricScore, get_judge
 from eval.records import RunRecord, new_run_id, record_path, utc_now, write_records
 from eval.scorers import SCORERS, CaseResult, expectation
@@ -93,8 +92,9 @@ async def run_case(
     that both for judging and for the run record, and rebuilding it later from the
     chunks would risk it differing from what was actually sent.
     """
-    [vector] = await embed_texts([case["question"]])
-    chunks = await search(vector, limit=SEARCH_LIMIT)
+    # Same retrieval path as the API, so the two can't drift. Every case in the set
+    # is a single segment, so this behaves exactly as the old embed-and-search did.
+    chunks = await retrieve_chunks(case["question"], limit=SEARCH_LIMIT)
 
     # Same refusal gate as the API: no chunks or weak top hit -> refuse (no generation).
     # This fires before any model runs, so it is identical across variants - it is

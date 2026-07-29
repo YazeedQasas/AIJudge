@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Judge — Session Breakdown, 28 July 2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --paper: #F2F4F7;
+    --surface: #FFFFFF;
+    --surface-2: #E8ECF1;
+    --ink: #0F1620;
+    --ink-2: #3A4855;
+    --slate: #5C6E80;
+    --rule: #D3DAE2;
+    --accent: #0B7C8A;
+    --accent-soft: #E0F0F2;
+    --flag: #A8620A;
+    --flag-soft: #FAEFDF;
+    --verdict: #2C7A5B;
+    --verdict-soft: #E2F0EA;
+    --dead: #9B2C4F;
+    --dead-soft: #FAE6EC;
+    --shadow: 0 1px 2px rgba(15,22,32,.06), 0 8px 24px -12px rgba(15,22,32,.18);
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
+    --col: 70ch;
+    --wide: 112ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0C1116; --surface: #141C24; --surface-2: #1C2630;
+      --ink: #E2E9EF; --ink-2: #B4C1CD; --slate: #8B9CAC; --rule: #26313D;
+      --accent: #45BCC6; --accent-soft: #103034;
+      --flag: #D9962F; --flag-soft: #2E2313;
+      --verdict: #55B98C; --verdict-soft: #12291F;
+      --dead: #E0708F; --dead-soft: #2C1520;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0C1116; --surface: #141C24; --surface-2: #1C2630;
+    --ink: #E2E9EF; --ink-2: #B4C1CD; --slate: #8B9CAC; --rule: #26313D;
+    --accent: #45BCC6; --accent-soft: #103034;
+    --flag: #D9962F; --flag-soft: #2E2313;
+    --verdict: #55B98C; --verdict-soft: #12291F;
+    --dead: #E0708F; --dead-soft: #2C1520;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+  :root[data-theme="light"] {
+    --paper: #F2F4F7; --surface: #FFFFFF; --surface-2: #E8ECF1;
+    --ink: #0F1620; --ink-2: #3A4855; --slate: #5C6E80; --rule: #D3DAE2;
+    --accent: #0B7C8A; --accent-soft: #E0F0F2;
+    --flag: #A8620A; --flag-soft: #FAEFDF;
+    --verdict: #2C7A5B; --verdict-soft: #E2F0EA;
+    --dead: #9B2C4F; --dead-soft: #FAE6EC;
+    --shadow: 0 1px 2px rgba(15,22,32,.06), 0 8px 24px -12px rgba(15,22,32,.18);
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; padding: 0 24px 96px;
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .col  { max-width: var(--col);  margin-inline: auto; }
+  .wide { max-width: var(--wide); margin-inline: auto; }
+
+  h1,h2,h3,h4 { font-weight: 800; letter-spacing: -.022em; text-wrap: balance; line-height: 1.15; }
+  h1 { font-size: clamp(2rem, 5vw, 2.9rem); margin: 0 0 .5rem; }
+  h2 { font-size: 1.55rem; margin: 0 0 .35rem; }
+  h3 { font-size: 1.1rem;  margin: 0 0 .3rem; letter-spacing: -.012em; }
+  h4 { font-size: .95rem;  margin: 0 0 .3rem; letter-spacing: 0; }
+  p  { margin: 0 0 1.05rem; }
+  a  { color: var(--accent); }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--slate); margin: 0 0 .7rem;
+  }
+  code, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  code { font-size: .855em; background: var(--surface-2); padding: .12em .38em; border-radius: 3px; }
+  bdi { font-size: 1.02em; }
+
+  header.mast { border-bottom: 1px solid var(--rule); padding: 68px 0 40px; margin-bottom: 52px; }
+  .lede { font-size: 1.2rem; line-height: 1.55; color: var(--ink-2); max-width: 62ch; margin: 0 0 1.8rem; }
+  .facts { display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 6px;
+           overflow: hidden; background: var(--surface); }
+  .fact { flex: 1 1 120px; padding: 14px 18px; border-right: 1px solid var(--rule); }
+  .fact:last-child { border-right: 0; }
+  .fact dt { font-family: var(--mono); font-size: .66rem; letter-spacing: .1em;
+             text-transform: uppercase; color: var(--slate); margin-bottom: 3px; }
+  .fact dd { margin: 0; font-family: var(--mono); font-size: 1.26rem; font-weight: 600;
+             font-variant-numeric: tabular-nums; }
+
+  section { margin-bottom: 60px; }
+  .sec-head { margin-bottom: 1.5rem; }
+  .sec-head > p { color: var(--slate); margin: 0; }
+
+  .stage { display: grid; grid-template-columns: 60px 1fr; gap: 0 20px; padding: 18px 0;
+           border-top: 1px solid var(--rule); align-items: start; }
+  .stage:last-of-type { border-bottom: 1px solid var(--rule); }
+  .stage-id { font-family: var(--mono); font-size: .82rem; font-weight: 700; color: var(--accent); padding-top: 2px; }
+  .stage-body p { margin: 0; color: var(--ink-2); font-size: .95rem; }
+  .stage-body p + p { margin-top: .55rem; }
+
+  .gate, .finding, .verdictbox {
+    border-radius: 5px; padding: 20px 24px; margin: 24px 0;
+  }
+  .gate { background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--accent); box-shadow: var(--shadow); }
+  .gate .eyebrow { color: var(--accent); margin-bottom: .45rem; }
+  .finding { background: var(--flag-soft); border: 1px solid var(--flag); }
+  .finding .eyebrow { color: var(--flag); }
+  .verdictbox { background: var(--dead-soft); border: 1px solid var(--dead); }
+  .verdictbox .eyebrow { color: var(--dead); }
+  .gate p, .finding p, .verdictbox p { margin: 0; font-size: .95rem; }
+  .gate p + p, .finding p + p, .verdictbox p + p { margin-top: .6rem; }
+
+  .scroll { overflow-x: auto; margin: 22px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: .88rem;
+          background: var(--surface); border: 1px solid var(--rule); border-radius: 5px; }
+  caption { caption-side: top; text-align: left; font-family: var(--mono); font-size: .7rem;
+            letter-spacing: .1em; text-transform: uppercase; color: var(--slate); padding-bottom: 8px; }
+  th, td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th { font-size: .69rem; letter-spacing: .07em; text-transform: uppercase;
+             color: var(--slate); font-weight: 600; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.hl td { background: var(--accent-soft); }
+
+  .pill { display: inline-block; font-family: var(--mono); font-size: .69rem; letter-spacing: .04em;
+          padding: 2px 8px; border-radius: 100px; white-space: nowrap; font-weight: 600; }
+  .p-pass  { background: var(--verdict-soft); color: var(--verdict); }
+  .p-fail  { background: var(--flag-soft);    color: var(--flag); }
+  .p-code  { background: var(--surface-2);    color: var(--slate); }
+  .p-model { background: var(--accent-soft);  color: var(--accent); }
+  .p-dead  { background: var(--dead-soft);    color: var(--dead); }
+
+  .commits { border-top: 1px solid var(--rule); }
+  .commit { display: grid; grid-template-columns: 84px 1fr; gap: 0 18px; padding: 12px 0;
+            border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .commit .sha { font-family: var(--mono); font-size: .8rem; color: var(--accent); }
+  .commit .msg { font-size: .93rem; }
+  .commit .msg span { display: block; color: var(--slate); font-size: .85rem; margin-top: 2px; }
+
+  .pull { border-left: 3px solid var(--accent); padding: 4px 0 4px 20px; margin: 26px 0;
+          font-size: 1.06rem; color: var(--ink-2); }
+  .pull strong { color: var(--ink); font-weight: 700; }
+
+  pre { background: var(--surface); border: 1px solid var(--rule); border-radius: 5px;
+        padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: .8rem;
+        line-height: 1.55; margin: 20px 0; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  pre.ar { direction: rtl; text-align: right; font-family: var(--sans); font-size: .92rem; line-height: 1.75; white-space: pre-wrap; }
+
+  ul.tight, ol.tight { margin: 0 0 1.05rem; padding-left: 1.3rem; }
+  ul.tight li, ol.tight li { margin-bottom: .45rem; }
+
+  .toc { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 24px; margin: 0 0 52px; }
+  .toc h4 { font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--slate); font-weight: 600; margin-bottom: .7rem; }
+  .toc ol { margin: 0; padding-left: 1.2rem; font-size: .93rem; }
+  .toc li { margin-bottom: .3rem; }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 24px; margin-top: 64px;
+           color: var(--slate); font-size: .87rem; }
+
+  @media (prefers-reduced-motion: no-preference) { a { transition: opacity .15s ease; } a:hover { opacity: .72; } }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  @media (max-width: 640px) {
+    body { font-size: 16px; padding: 0 18px 64px; }
+    .stage { grid-template-columns: 44px 1fr; gap: 0 12px; }
+    .commit { grid-template-columns: 72px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="col">
+    <p class="eyebrow">AI Judge · Full session breakdown · 28 July 2026</p>
+    <h1>We built the measuring instrument, and it said don’t build the thing</h1>
+    <p class="lede">
+      The session started with “where would LoRA go in this codebase?” It ends with a measured
+      answer to a better question: <em>does the fine-tune have anything left to do?</em>
+      For one of its three objectives, the answer is no — and finding that out took one hour
+      instead of two weeks.
+    </p>
+    <dl class="facts">
+      <div class="fact"><dt>Commits</dt><dd>7</dd></div>
+      <div class="fact"><dt>Eval cases</dt><dd>5 → 59</dd></div>
+      <div class="fact"><dt>Generations</dt><dd>118</dd></div>
+      <div class="fact"><dt>Bugs found</dt><dd>7</dd></div>
+      <div class="fact"><dt>Objectives left</dt><dd>2 of 3</dd></div>
+    </dl>
+  </div>
+</header>
+
+<nav class="toc col">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#answer">The question, and the answer</a></li>
+    <li><a href="#plan">The plan: three stages, two hard gates</a></li>
+    <li><a href="#built">What got built — A0 through A9</a></li>
+    <li><a href="#yardstick">The yardstick fix, in detail</a></li>
+    <li><a href="#baseline">The baseline result</a></li>
+    <li><a href="#bugs">Every bug found, and who owns it</a></li>
+    <li><a href="#verdict">What this means for the LoRA</a></li>
+    <li><a href="#commits">The commit trail</a></li>
+    <li><a href="#commands">How to run any of it</a></li>
+    <li><a href="#open">Open questions</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ================= 1 ================= -->
+<section class="col" id="answer">
+  <div class="sec-head">
+    <p class="eyebrow">01 · The starting question</p>
+    <h2>Where does LoRA go?</h2>
+  </div>
+  <p>
+    Nowhere in <code>app/</code>. The backend is a thin HTTP client to LM Studio — five
+    dependencies, no ML libraries, no model weights. Fine-tuning doesn’t slot into it because
+    there’s nothing there for it to slot into.
+  </p>
+  <p>
+    LoRA is a separate <em>offline</em> subsystem beside <code>app/</code> and <code>eval/</code>,
+    and its only runtime touchpoint is one config value naming which model LM Studio serves. That
+    shape matters: a fine-tune can be swapped in or rolled back without touching application code.
+  </p>
+  <p>The dependency arrow only ever points one way:</p>
+  <pre><code>training/  ──imports──▶  eval/  ──imports──▶  app/
+   ▲                                            │
+   └────────────── never ───────────────────────┘</code></pre>
+  <p>
+    <code>training/</code> <em>must</em> import from <code>app/</code> — that’s the whole point.
+    A training example has to be built by the same code that builds an inference prompt, or the
+    model learns a format it never sees in production. What must never happen is <code>app/</code>
+    importing either.
+  </p>
+  <div class="pull">
+    The real work was never the training script. It’s <strong>being able to tell whether the
+    training script helped</strong> — and that has to exist first, or the answer is unfalsifiable.
+  </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="col" id="plan">
+  <div class="sec-head">
+    <p class="eyebrow">02 · The plan</p>
+    <h2>Three stages, two hard gates</h2>
+    <p>Eval infrastructure → dataset → training. The order is the whole design.</p>
+  </div>
+  <p>
+    Three objectives were chosen for the fine-tune: <strong>(a)</strong> format and citation
+    discipline, <strong>(b)</strong> refusal calibration, <strong>(c)</strong> Arabic register.
+    Explicitly <em>not</em> knowledge injection — RAG owns that, and a 20,000-character corpus
+    can’t teach facts to weights without inviting hallucination.
+  </p>
+
+  <div class="gate">
+    <p class="eyebrow">Gate 1 · before anything else</p>
+    <h3>Measure the baseline</h3>
+    <p>
+      The base model may already do what the fine-tune was meant to teach. If so, the work is
+      pointless, and the cheapest possible way to discover that is an hour of inference — versus
+      roughly ten hours of human dataset review spent teaching a model something it already does.
+    </p>
+    <p><strong>This gate fired.</strong> See section 05.</p>
+  </div>
+
+  <div class="gate">
+    <p class="eyebrow">Gate 2 · before any dataset work</p>
+    <h3>Prove the model survives the round trip</h3>
+    <p>
+      <code>google/gemma-4-e4b</code> is almost certainly a Gemma-3n MatFormer — per-layer
+      embeddings, a nested submodel, non-standard module names like <code>altup</code> and
+      <code>laurel</code>. Its adapter → merge → GGUF path isn’t well-trodden and fails late.
+    </p>
+    <p>
+      The spike: rank-4 adapter, five lines of garbage data, ten steps, merge, convert, load back
+      into LM Studio. Quality irrelevant — the only question is whether the pipeline completes.
+      If it doesn’t, switch to Qwen 3, which is cheap <em>because</em> A1 made the model a card
+      rather than a constant. <strong>Not yet run.</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="wide" id="built">
+  <div class="col sec-head">
+    <p class="eyebrow">03 · Stage A</p>
+    <h2>What got built</h2>
+    <p>Ten increments, each independently checkable. That’s why they’re split.</p>
+  </div>
+
+  <div class="col">
+    <div class="stage"><div class="stage-id">A0</div><div class="stage-body">
+      <h3>Commit the work in progress</h3>
+      <p>Prompt versioning, the eval harness, and the testing page were all untracked. Committed
+         first so everything after had a rollback point.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A1</div><div class="stage-body">
+      <h3>A model registry — <code>app/model_registry.py</code>, <code>app/models/*.md</code></h3>
+      <p>Model identity becomes data in a file. A card names the exact string LM Studio serves,
+         plus the provenance a fine-tune needs: base model, training run, dataset hash, and the
+         prompt version it was trained against.</p>
+      <p>That last field is load-bearing. A LoRA learns the wording it saw; pair it with a
+         different prompt version later and it quietly underperforms for a reason nobody remembers
+         six weeks on.</p>
+      <p><em>Deviation from plan:</em> the plan said import <code>_split_frontmatter</code> from
+         <code>prompt_registry</code>. Instead it was extracted to <code>app/frontmatter.py</code>
+         — reaching into another module’s privates would have coupled the two registries for no
+         conceptual reason.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A2</div><div class="stage-body">
+      <h3><code>GET /models</code></h3>
+      <p>A direct mirror of the existing <code>GET /prompts</code>, so the testing page can pair
+         the two dropdowns into a (prompt × model) picker.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A3</div><div class="stage-body">
+      <h3>Plumb the model choice through the API</h3>
+      <p><code>stream_completion</code> couldn’t carry a model override at all — only the
+         non-streaming path could, and the UI uses streaming. So the streaming path physically
+         could not honour a model choice.</p>
+      <p>Also fixed a drift bug: the stream’s <code>done</code> event reported the model read from
+         the <em>prompt</em> frontmatter, which only records what the wording was tuned against.
+         It now reports the identifier that actually went out on the wire.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A4</div><div class="stage-body">
+      <h3>Score variants, not prompt versions</h3>
+      <p>The unit an eval scores is now a <code>Variant</code> — <code>v2@base</code>, pairing a
+         prompt version with a model. Scoring the combination is also how the coupling between
+         them gets measured rather than assumed.</p>
+      <p>Two operational details: models iterate in the <em>outer</em> loop, because LM Studio
+         JIT-loads a model on first use and the alternative thrashes; and <code>--models</code>
+         defaults to just the active model, because the full cartesian product is hundreds of
+         local generations and should be opt-in.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A5</div><div class="stage-body">
+      <h3>Save what actually happened — <code>eval/records.py</code></h3>
+      <p>Runs printed a scorecard and discarded everything else. Now each case writes a JSON line:
+         question, expected outcome, the exact sources block the model saw, the full answer,
+         per-scorer results, resolved model, sampling params, timing.</p>
+      <p>Rates say a case failed; only the text says why. Three of the seven bugs below were found
+         by reading these records, and two of them were bugs in the scorers themselves.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A6</div><div class="stage-body">
+      <h3>Separate declining from refusing</h3>
+      <p>The most consequential change of the session — full detail in section 04.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A7</div><div class="stage-body">
+      <h3>5 cases → 59, every label measured</h3>
+      <p>With three answerable cases, one flip moved a rate by 33 points. Every candidate was
+         probed against real retrieval <em>before</em> being written down; four were relabelled or
+         dropped because their behaviour contradicted the intent.</p>
+      <p>Each case records its measured top score in a comment, so the labels stay checkable when
+         the corpus or threshold changes.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A8</div><div class="stage-body">
+      <h3>An independent judge — <code>ClaudeJudge</code></h3>
+      <p>The comparison ahead is “base model vs. a LoRA of that base model.” A local Gemma scoring
+         both sides is a model grading two variants of itself — it can’t penalise a fabrication it
+         would also have made.</p>
+      <p>Lazily imported, in <code>requirements-data.txt</code> rather than
+         <code>requirements.txt</code>, so the five runtime dependencies stay five and the local
+         judge keeps working with none of it installed.</p>
+    </div></div>
+
+    <div class="stage"><div class="stage-id">A9</div><div class="stage-body">
+      <h3>The baseline run <span class="pill p-pass">complete</span></h3>
+      <p>59 cases × 2 prompt versions = 118 generations at ~31 seconds each. Records committed as
+         <code>eval/results/baseline-20260728-094100.jsonl</code> (644 KB).</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="wide" id="yardstick">
+  <div class="col sec-head">
+    <p class="eyebrow">04 · A6 in detail</p>
+    <h2>One boolean was hiding the thing worth measuring</h2>
+  </div>
+
+  <div class="col">
+    <p>Every eval case carried <code>should_refuse: true|false</code>. It collapsed two events that
+       have nothing to do with each other.</p>
+  </div>
+
+  <div class="col scroll">
+    <table>
+      <caption>Three outcomes, not two</caption>
+      <thead><tr><th>Outcome</th><th>What happens</th><th>Whose behaviour</th></tr></thead>
+      <tbody>
+        <tr><td><code>refused</code></td>
+            <td>Retrieval scores below threshold. The app returns a canned string — no model ever runs.</td>
+            <td><span class="pill p-code">code</span></td></tr>
+        <tr class="hl"><td><code>declined</code></td>
+            <td>Sources come back above threshold but don’t contain the answer. The model says so.</td>
+            <td><span class="pill p-model">model</span></td></tr>
+        <tr><td><code>answered</code></td>
+            <td>The model answers from the sources.</td>
+            <td><span class="pill p-model">model</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <p>
+      The highlighted row is the hard one, and it was invisible. A question whose sources scraped
+      past the threshold without covering it was labelled <code>should_refuse: false</code>, so
+      <code>has_citation</code> and <code>ruling_line_present</code> <em>penalised</em> a model for
+      correctly saying “these don’t answer this” — and rewarded one that answered anyway.
+    </p>
+    <p>
+      Objective (b) was unmeasurable by construction. Any work aimed at calibration would have
+      registered as a regression.
+    </p>
+    <h3 style="margin-top:1.6rem">The replacement is deliberately symmetric</h3>
+    <p>
+      <code>decline_correct</code> fails a model that answers from weak sources <em>and</em> one
+      that declines when the sources were fine. A one-sided “did it decline?” check would be
+      trivially satisfied by a model that declines everything — which would look like a
+      fine-tuning win while being a serious regression.
+    </p>
+  </div>
+
+  <div class="finding col">
+    <p class="eyebrow">Gotcha worth keeping</p>
+    <h3>Arabic diacritics silently break substring matching</h3>
+    <p>
+      Detecting a decline means matching phrases like <bdi>لا تتضمّن</bdi>. Models emit tashkeel
+      inconsistently — the same word arrives as <bdi>تتضمّن</bdi> or <bdi>تتضمن</bdi> depending on
+      the sample. Raw matching would have missed half the output and produced a plausible, wrong
+      number. Both sides are normalised (diacritics and tatweel stripped, alef forms unified)
+      before comparison.
+    </p>
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="wide" id="baseline">
+  <div class="col sec-head">
+    <p class="eyebrow">05 · The result</p>
+    <h2>The baseline</h2>
+    <p>Stock <code>google/gemma-4-e4b</code>, 59 cases, seed 42, no fine-tuning.</p>
+  </div>
+
+  <div class="col scroll">
+    <table>
+      <caption>Guardrails — binary pass/fail</caption>
+      <thead><tr><th>Metric</th><th>Kind</th><th class="num">v1@base</th><th class="num">v2@base</th></tr></thead>
+      <tbody>
+        <tr><td><code>gate_correct</code></td><td>quality</td><td class="num">59/59</td><td class="num">59/59</td></tr>
+        <tr><td><code>decline_correct</code></td><td>quality</td><td class="num">46/53</td><td class="num">48/53</td></tr>
+        <tr class="hl"><td><code>citations_valid</code></td><td>quality</td><td class="num">59/59</td><td class="num">59/59</td></tr>
+        <tr class="hl"><td><code>has_citation</code></td><td>quality</td><td class="num">41/41</td><td class="num">41/41</td></tr>
+        <tr><td><code>no_citation_when_declining</code></td><td>quality</td><td class="num">2/12</td><td class="num">0/12</td></tr>
+        <tr class="hl"><td><code>ruling_line_present</code></td><td>behavior</td><td class="num">1/41</td><td class="num">41/41</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdictbox col">
+    <p class="eyebrow">Gate 1 · fired</p>
+    <h3>Objective (a) is already at ceiling</h3>
+    <p>
+      On v2 the <strong>stock</strong> model emits the labelled ruling line on 41 of 41 answered
+      cases, cites at least one source on 41 of 41, and never once cites a source number that
+      doesn’t exist — 59 of 59 across every case.
+    </p>
+    <p>
+      Format and citation discipline was one of the three things the LoRA was going to teach.
+      There is nothing left to teach.
+    </p>
+    <p>
+      And <code>ruling_line_present</code> scoring <strong>1/41 on v1</strong> proves this is a
+      real measurement rather than a scorer that passes everything — the prompt change alone moved
+      it from 1 to 41. The instrument works; the objective is just already met.
+    </p>
+  </div>
+
+  <div class="col">
+    <h3 style="margin-bottom:.6rem">The model does not fabricate</h3>
+    <p>
+      Across all 118 generations, no invented figures were found. Where the model fails it
+      <em>evades</em> — answers a nearby question, or quotes the source’s own vague phrasing back
+      as though it were the answer. That is a different and far less dangerous failure than making
+      up a number, and it was the specific risk the declined-case design was built to catch.
+    </p>
+
+    <h3 style="margin-top:1.6rem;margin-bottom:.6rem">Two answers worth reading in full</h3>
+    <p>A correct decline, on a case where the corpus covers the topic but omits the figure:</p>
+  </div>
+
+  <div class="col">
+    <pre class="ar">…براءة الاختراع هي حق استئثاري يُمنح عن اختراع جديد… وتخول صاحبها حقاً استئثارياً في استغلال اختراعه لمدة محددة [1]…
+
+ومع ذلك، فإن المصادر القانونية المقدمة لا تتضمن تفصيلاً محدداً لـ:
+*   المدة الزمنية لحماية براءة الاختراع بالسنوات.
+*   الإجراءات المتبعة لتجديد هذه الحماية.
+
+الحكم المقترح: لا تتوفر في المصادر القانونية المتاحة معلومات تحدد مدة حماية براءة الاختراع…</pre>
+  </div>
+
+  <div class="col">
+    <p>
+      That is close to ideal: it establishes what the sources <em>do</em> say, names precisely what
+      is missing, and declines. It is also why one of the scorers turned out to be wrong — see
+      bug 5.
+    </p>
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="wide" id="bugs">
+  <div class="col sec-head">
+    <p class="eyebrow">06 · Findings</p>
+    <h2>Seven bugs, and who owns each</h2>
+    <p>Three in the product, three in the measurement, one in the process.</p>
+  </div>
+
+  <div class="col">
+    <h3 style="margin-bottom:.5rem">1 · The relevance threshold is miscalibrated <span class="pill p-fail">product</span></h3>
+    <p>Questions the corpus <em>demonstrably answers</em> fall below the <code>0.5</code> gate.</p>
+  </div>
+
+  <div class="col scroll">
+    <table>
+      <caption>False refusals</caption>
+      <thead><tr><th>Question</th><th class="num">Score</th><th>Where the answer is</th></tr></thead>
+      <tbody>
+        <tr><td><bdi>ما المعيار الحاكم في إسناد الحضانة؟</bdi></td><td class="num">0.491</td>
+            <td>family §4 — the section <em>is</em> custody</td></tr>
+        <tr><td><bdi>من هو الحامل حسن النية؟</bdi></td><td class="num">0.444</td>
+            <td>negotiable §3 — states it verbatim</td></tr>
+        <tr><td><bdi>ما حكم تعسف المالك في استعمال حقه؟</bdi></td><td class="num">0.497</td>
+            <td>property §4 — states the rule verbatim</td></tr>
+        <tr><td><em>Bankruptcy priority</em> — genuinely absent from the corpus</td><td class="num">0.484</td>
+            <td>— scores <strong>above</strong> two of the answerable ones</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <p>
+      The populations overlap, so no single threshold separates them. <code>0.5</code> was a guess
+      and is the one number in the pipeline never checked against data. Deliberately left alone —
+      changing it would move the yardstick out from under the baseline. Documented in the README.
+    </p>
+
+    <h3 style="margin-top:1.8rem;margin-bottom:.5rem">2 · A real case gets refused <span class="pill p-fail">product</span></h3>
+    <p>
+      Pasting a full plaintiff-vs-defendant case into the Ask page returns “not enough
+      information.” A 250-word case embeds to an average of many topics and matches no single
+      500-character chunk strongly. <strong>The system can’t accept the input format its own prompt
+      was written for</strong> — the prompt says “propose the ruling based on the case presented.”
+      Not yet measured precisely.
+    </p>
+
+    <h3 style="margin-top:1.8rem;margin-bottom:.5rem">3 · The spinner never clears on a refusal <span class="pill p-fail">product</span></h3>
+    <p>
+      In <code>ask.ts</code>, the <code>token</code> branch calls <code>stage.set(null)</code>; the
+      <code>refused</code> branch doesn’t. So the answer renders while
+      <bdi>جارٍ البحث في الوثائق…</bdi> stays on screen forever. One line.
+    </p>
+
+    <h3 style="margin-top:1.8rem;margin-bottom:.5rem">4 · A case label was wrong — mine, not the model’s <span class="pill p-model">measurement</span></h3>
+    <p>
+      <code>tort-negligence-vs-intent</code> flagged as an over-decline. Reading the record: the
+      model analysed negligence correctly from <code>tort_principles</code>, then observed the
+      sources contain no definition of <em>intent</em> — and it was right. Retrieval returned only
+      negligence chunks; <code>intentional_torts_overview</code> never came back. The question
+      needs two documents and got one. It tests retrieval recall, not the model.
+    </p>
+
+    <h3 style="margin-top:1.8rem;margin-bottom:.5rem">5 · A scorer encodes a wrong opinion <span class="pill p-model">measurement</span></h3>
+    <p>
+      <code>no_citation_when_declining</code> scored 0/12 — alarming, until you read what the model
+      does. It cites <code>[1]</code> to establish what the sources <em>do</em> say, then names what
+      is missing. That is <em>better</em> than a bare decline, and the scorer marks it failed. The
+      assertion “a decline cites nothing” was mine, and it was wrong.
+    </p>
+
+    <h3 style="margin-top:1.8rem;margin-bottom:.5rem">6 · The decline detector has a gap <span class="pill p-model">measurement</span></h3>
+    <p>
+      <code>declined-protest-procedure</code> counted as an under-decline, but its answer says
+      <bdi>لا تحدد أو تصف تفاصيل هذه الإجراءات</bdi> — a decline phrased with
+      <bdi>لا تحدد</bdi>, which isn’t in <code>DECLINE_MARKERS</code>. Some of the remaining
+      <code>decline_correct</code> failures are the detector, not the model, so the true
+      calibration gap is <strong>smaller than 48/53 suggests</strong>.
+    </p>
+
+    <h3 style="margin-top:1.8rem;margin-bottom:.5rem">7 · Mangled commit messages <span class="pill p-code">process</span></h3>
+    <p>
+      The first commit used PowerShell here-string syntax (<code>@'…'@</code>) inside the Bash
+      tool, where it doesn’t exist. Bash read it as a literal <code>@</code> plus a quoted string,
+      so the commit shipped with a subject line of <code>@ Add prompt versioning…</code>. Caught
+      when the same syntax broke outright on an apostrophe. Amended before pushing; all later
+      commits use heredocs.
+    </p>
+  </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="wide" id="verdict">
+  <div class="col sec-head">
+    <p class="eyebrow">07 · The decision</p>
+    <h2>What’s left of the case for fine-tuning</h2>
+  </div>
+
+  <div class="col scroll">
+    <table>
+      <thead><tr><th>Objective</th><th>Baseline</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>(a)</strong> Format + citation discipline</td>
+          <td class="num">41/41 · 41/41 · 59/59</td>
+          <td><span class="pill p-dead">dead</span> nothing left to teach</td>
+        </tr>
+        <tr>
+          <td><strong>(b)</strong> Refusal calibration</td>
+          <td class="num">48/53 (~91%)</td>
+          <td><span class="pill p-fail">shrunk</span> and partly measurement bugs</td>
+        </tr>
+        <tr>
+          <td><strong>(c)</strong> Arabic register</td>
+          <td class="num">—</td>
+          <td><span class="pill p-code">unmeasured</span> guardrails can’t see it</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <p>
+      Honestly: the value proposition got much weaker in the space of one hour. Objective (a) is
+      gone outright. Objective (b) sits around 91% and at least some of the failures are bugs 4–6
+      above rather than model behaviour — the real gap may be two or three cases out of 59, which
+      is close to the noise floor at this sample size.
+    </p>
+    <p>
+      That leaves <strong>(c)</strong>, which is the hardest of the three to measure, the least
+      certain to improve, and currently has no number at all.
+    </p>
+    <div class="pull">
+      This is not a disappointing result. It is <strong>the result the staging was designed to
+      produce</strong>, arriving at the cheapest possible moment — before the dataset, before the
+      GPU, before ten hours of review.
+    </div>
+    <p>
+      The cheap next move is to fix bugs 4–6 and <em>re-score from the saved records with zero
+      inference</em> — which is possible only because A5 stored the full answers — then run the
+      rubric judge for a first read on (c). About an hour, and it settles whether Stage B is worth
+      starting.
+    </p>
+  </div>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="col" id="commits">
+  <div class="sec-head">
+    <p class="eyebrow">08 · Trail</p>
+    <h2>Seven commits</h2>
+  </div>
+  <div class="commits">
+    <div class="commit"><div class="sha">efcf103</div><div class="msg">Prompt versioning, eval harness, testing page
+      <span>Pre-existing work, committed as a rollback point</span></div></div>
+    <div class="commit"><div class="sha">99413b9</div><div class="msg">A model axis alongside the prompt-version axis
+      <span>Registry, model cards, <code>GET /models</code>, streaming override</span></div></div>
+    <div class="commit"><div class="sha">0f19489</div><div class="msg">Score variants, not prompt versions alone
+      <span>Models iterate outer so LM Studio loads each once</span></div></div>
+    <div class="commit"><div class="sha">c371a9f</div><div class="msg">Separate declining from refusing; persist run records
+      <span>The yardstick fix and the JSONL artifacts</span></div></div>
+    <div class="commit"><div class="sha">cc517db</div><div class="msg">59 cases, every label verified against retrieval
+      <span>Measured scores recorded per case</span></div></div>
+    <div class="commit"><div class="sha">3f2d158</div><div class="msg">Independent Claude judge; document the threshold
+      <span>Lazy import — five runtime dependencies stay five</span></div></div>
+    <div class="commit"><div class="sha">2129869</div><div class="msg">Baseline: 118 records, format objective at ceiling
+      <span>The measurement this stage existed to produce</span></div></div>
+  </div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section class="col" id="commands">
+  <div class="sec-head">
+    <p class="eyebrow">09 · Reference</p>
+    <h2>How to run any of it</h2>
+    <p>All from <code>backend/</code>, with LM Studio and Qdrant up.</p>
+  </div>
+  <pre><code># Guardrails only, active model, all prompt versions
+python -m eval.run_eval --no-judge
+
+# Compare specific prompt versions and models
+python -m eval.run_eval --prompts v1 v2 --models base lora_v1
+
+# Name the output file (results land in eval/results/)
+python -m eval.run_eval --no-judge --label baseline
+
+# With an LLM judge for the 1-5 rubric
+python -m eval.run_eval --judge local     # local Gemma; self-biased
+python -m eval.run_eval --judge claude    # independent; needs the anthropic SDK
+
+# Don't write a results file at all
+python -m eval.run_eval --no-save</code></pre>
+
+  <p>Reading a saved run back, without re-running any inference:</p>
+  <pre><code>from pathlib import Path
+from eval.records import load_records
+
+recs = load_records(Path('eval/results/baseline-20260728-094100.jsonl'))
+by = {(r.variant, r.case_id): r for r in recs}
+print(by[('v2@base', 'declined-patent-term')].answer)</code></pre>
+
+  <p>The Claude judge needs one extra install, deliberately kept out of the runtime set:</p>
+  <pre><code>pip install -r requirements-data.txt
+# then either:
+export ANTHROPIC_API_KEY=...
+# or:
+ant auth login</code></pre>
+</section>
+
+<!-- ================= 10 ================= -->
+<section class="col" id="open">
+  <div class="sec-head">
+    <p class="eyebrow">10 · Open</p>
+    <h2>Unresolved</h2>
+  </div>
+  <ol class="tight">
+    <li><strong>Does the LoRA still have a case?</strong> The live question. Objective (a) is dead;
+        (b) is small and partly noise; (c) is unmeasured.</li>
+    <li><strong>Your VRAM is still unknown.</strong> Every hyperparameter in Stage C is conditional
+        on it, and it’s step one of the Gate 2 spike.</li>
+    <li><strong>Gate 2 hasn’t run.</strong> Whether <code>gemma-4-e4b</code> can complete
+        adapter → merge → GGUF → LM Studio at all is unknown.</li>
+    <li><strong>Bugs 1–3 are unfixed</strong> — threshold, long-case dilution, spinner. All three
+        are product bugs independent of the fine-tuning work, and arguably better value than the
+        LoRA right now.</li>
+    <li><strong>The eval tests questions, not cases.</strong> All 59 are definitional; the prompt
+        is written to adjudicate a plaintiff-vs-defendant dispute. Bug 2 means the app can’t
+        currently accept that shape at all.</li>
+  </ol>
+
+  <div class="pull">
+    Stage A’s job was to make “did this work?” <strong>boring and checkable</strong> — a number
+    beside another number, same questions, same seed. That now exists, and its first act was to
+    argue against the project that built it.
+  </div>
+</section>
+
+</main>
+
+<footer class="col">
+  <p>
+    AI Judge — Arabic legal RAG prototype. Session of 28 July 2026: the LoRA plan, Stage A of its
+    implementation, and the baseline that reshaped it. Educational project; not a legal product,
+    and not to be used to make, inform, or influence real legal decisions.
+  </p>
+</footer>
+
+</body>
+</html>

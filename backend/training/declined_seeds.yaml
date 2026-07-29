@@ -1,0 +1,76 @@
+# Seed questions for construction #2 ("weak-but-passing") - see the plan's B6 table.
+#
+# UNLIKE seed_questions.yaml, these are NOT written from content that exists in
+# their source_doc. Each asks for a specific figure, period, percentage, or count
+# that the named document conspicuously omits - it says a rule exists ("لمدة
+# محددة", "بحسب ظروف الحال", "وفق الإجراءات القانونية") without giving its
+# content. That phrasing is legally on-topic enough that retrieval genuinely
+# clears the relevance gate (top score >= 0.5, verified live against Qdrant - see
+# the `top=` comment on each entry, same discipline as eval/cases.yaml), but the
+# retrieved chunks don't actually answer the question. The model has to notice
+# that, not pattern-match on topic and invent a number.
+#
+# This is exactly the shape of eval/cases.yaml's own 12 DECLINED cases (see its
+# header comment) - deliberately: it's the only well-understood way to construct
+# this failure mode. What keeps these from being contamination is that they target
+# a DIFFERENT omitted figure, mostly in DIFFERENT documents, than any eval case -
+# checked with training.contamination.check_contamination when written (zero hits),
+# and re-checked by training.validate on every full-dataset run.
+#
+# Deliberately skips documents eval already covers heavily for this construction
+# (employment: 3 cases: evidence, intellectual_property: 2 cases; negotiable;
+# property; wills) - adding more there raises contamination risk for low added
+# value when 13 other documents have none yet.
+
+seeds:
+  - id: declined2-capacity-age                 # top=0.562
+    source_doc: contract_principles.txt
+    question: ما هو سن البلوغ الذي يشترطه القانون لتوافر أهلية التعاقد الصحيحة؟
+
+  - id: declined2-agency-fee-rate               # top=0.600
+    source_doc: agency_law_overview.txt
+    question: ما هي نسبة الأجر الذي يستحقه الوكيل عادة مقابل تنفيذ الوكالة؟
+
+  - id: declined2-civpro-response-days          # top=0.534
+    source_doc: civil_procedure_overview.txt
+    question: خلال كم يوماً يجب على المدعى عليه الرد على صحيفة الدعوى بعد إعلانه بها؟
+
+  - id: declined2-const-judges-count            # top=0.512
+    source_doc: constitutional_law_overview.txt
+    question: كم عدد قضاة الجهة القضائية المختصة بالرقابة على الدستورية؟
+
+  - id: declined2-consumer-return-days          # top=0.535
+    source_doc: consumer_protection_overview.txt
+    question: خلال كم يوماً يحق للمستهلك رد السلعة المعيبة واسترداد ثمنها؟
+
+  - id: declined2-criminal-age                  # top=0.518
+    source_doc: criminal_law_overview.txt
+    question: ما السن الذي يعتبر فيه الشخص غير مسؤول جنائياً بسبب صغر سنه؟
+
+  - id: declined2-defamation-limitation         # top=0.628
+    source_doc: defamation_overview.txt
+    question: ما المدة التي يجب خلالها رفع دعوى التشهير؟
+
+  - id: declined2-family-division-pct           # top=0.561
+    source_doc: family_law_overview.txt
+    question: ما نسبة تقسيم الأموال المكتسبة أثناء الزواج عند الطلاق؟
+
+  - id: declined2-itorts-reasonable-force       # top=0.589
+    source_doc: intentional_torts_overview.txt
+    question: ما هو القدر المعقول من القوة المسموح استخدامه في الدفاع الشرعي عن المال؟
+
+  - id: declined2-landlord-notice-days          # top=0.578
+    source_doc: landlord_tenant_overview.txt
+    question: كم مدة الإشعار الواجب توجيهها للمستأجر قبل الإخلاء؟
+
+  - id: declined2-prodliability-limitation      # top=0.607
+    source_doc: product_liability_overview.txt
+    question: ما المدة التي يجوز خلالها للمضرور رفع دعوى المسؤولية عن المنتج المعيب؟
+
+  - id: declined2-remedies-reduction-pct        # top=0.640
+    source_doc: remedies_overview.txt
+    question: بأي نسبة يُخفَّض التعويض بسبب خطأ المضرور؟
+
+  - id: declined2-negligence-limitation         # top=0.584
+    source_doc: tort_principles.txt
+    question: ما هي مدة تقادم دعوى الإهمال؟

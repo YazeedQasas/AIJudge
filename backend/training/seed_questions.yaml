@@ -1,0 +1,518 @@
+# Seed questions for Stage B dataset construction.
+#
+# ~5 hand-written questions per corpus document (bnacked/data/sample_corpus/),
+# grouped by source_doc with a `kind` tag:
+#   definitional - asks directly for a rule, element, or definition
+#   scenario      - a short fact pattern requiring the reader to apply the rule
+# Expansion (B8) paraphrases each of these into 3-4 further variants (formal vs.
+# colloquial, short vs. multi-part) - that is the OTHER axis of variation, added
+# on top of these, not duplicated here.
+#
+# All seeds here are "answered"-flavored: each is written from content that
+# genuinely exists in its source_doc, so retrieval should find real coverage. The
+# negative constructions (declined / mismatched / partial - see the plan's B6/B7)
+# are produced downstream by build_dataset.py deliberately manipulating retrieval
+# on top of these same seeds, not by writing separate negative questions here.
+#
+# CONTAMINATION: these feed training/build_dataset.py and must never duplicate an
+# eval/cases.yaml question - that list is the project's permanent yardstick, and
+# training on it would make later scores measure memorization, not improvement.
+# Checked by hand against eval/cases.yaml when written; the contamination guard
+# (B6) re-checks it programmatically before any teacher call, and is the thing to
+# trust once it exists - not this comment.
+
+seeds:
+
+  # --- contract_principles.txt ---------------------------------------------------
+  - id: contract-001
+    source_doc: contract_principles.txt
+    kind: definitional
+    question: ما هي عيوب الرضا التي تبطل التعبير عن الإرادة في العقد؟
+
+  - id: contract-002
+    source_doc: contract_principles.txt
+    kind: scenario
+    question: قاصر عمره خمسة عشر عاماً باع دراجته الهوائية دون إذن وليه، فهل يعد هذا التصرف نافذاً؟
+
+  - id: contract-003
+    source_doc: contract_principles.txt
+    kind: definitional
+    question: ما الشروط الواجب توافرها في محل الالتزام حتى يكون العقد صحيحاً؟
+
+  - id: contract-004
+    source_doc: contract_principles.txt
+    kind: scenario
+    question: أبرم شخصان عقداً كان سببه المعلن التهرب من ضريبة مستحقة، فما مصير هذا العقد؟
+
+  - id: contract-005
+    source_doc: contract_principles.txt
+    kind: scenario
+    question: أخلّ أحد المتعاقدين بتنفيذ التزامه رغم إمكان التنفيذ العيني، فما الخيارات المتاحة للطرف الآخر؟
+
+  # --- agency_law_overview.txt -----------------------------------------------------
+  - id: agency-001
+    source_doc: agency_law_overview.txt
+    kind: definitional
+    question: كيف تنشأ الوكالة بين الموكل والوكيل؟
+
+  - id: agency-002
+    source_doc: agency_law_overview.txt
+    kind: scenario
+    question: وكيل تجاوز حدود وكالته الخاصة بشراء بضاعة معينة واشترى بضاعة أخرى باسم موكله، فهل يلتزم الموكل بهذا التصرف؟
+
+  - id: agency-003
+    source_doc: agency_law_overview.txt
+    kind: definitional
+    question: ما التزامات الوكيل تجاه موكله أثناء تنفيذ الوكالة؟
+
+  - id: agency-004
+    source_doc: agency_law_overview.txt
+    kind: scenario
+    question: توفي الموكل أثناء قيام الوكيل بتنفيذ الوكالة، فهل يستمر الوكيل في تنفيذ ما تبقى من العمل الموكل به؟
+
+  - id: agency-005
+    source_doc: agency_law_overview.txt
+    kind: definitional
+    question: بم يلتزم الموكل تجاه الوكيل مقابل قيامه بالوكالة؟
+
+  # --- civil_procedure_overview.txt ------------------------------------------------
+  - id: civpro-001
+    source_doc: civil_procedure_overview.txt
+    kind: definitional
+    question: متى تقضي المحكمة من تلقاء نفسها بعدم اختصاصها بنظر الدعوى؟
+
+  - id: civpro-002
+    source_doc: civil_procedure_overview.txt
+    kind: scenario
+    question: رفع مدعٍ دعوى أمام محكمة لا اختصاص نوعياً لها بنظر النزاع، فما مصير هذه الدعوى؟
+
+  - id: civpro-003
+    source_doc: civil_procedure_overview.txt
+    kind: definitional
+    question: ما الغاية من تبادل المستندات بين الخصوم قبل الجلسة؟
+
+  - id: civpro-004
+    source_doc: civil_procedure_overview.txt
+    kind: scenario
+    question: شخص لا تربطه صلة بالحق المتنازع عليه رفع دعوى للمطالبة به، فهل تقبل دعواه؟
+
+  - id: civpro-005
+    source_doc: civil_procedure_overview.txt
+    kind: definitional
+    question: على أي أساس يجوز الطعن في الحكم القضائي؟
+
+  # --- constitutional_law_overview.txt ----------------------------------------------
+  - id: const-001
+    source_doc: constitutional_law_overview.txt
+    kind: definitional
+    question: ما مقتضى مبدأ سيادة القانون؟
+
+  - id: const-002
+    source_doc: constitutional_law_overview.txt
+    kind: scenario
+    question: أصدرت السلطة التنفيذية قراراً يقيد حرية الاجتماع دون سند من القانون، فهل يكون هذا القرار مشروعاً؟
+
+  - id: const-003
+    source_doc: constitutional_law_overview.txt
+    kind: definitional
+    question: هل الحقوق والحريات التي يكفلها الدستور مطلقة؟
+
+  - id: const-004
+    source_doc: constitutional_law_overview.txt
+    kind: definitional
+    question: ما الأثر المترتب على قضاء الجهة القضائية المختصة بعدم دستورية قانون؟
+
+  - id: const-005
+    source_doc: constitutional_law_overview.txt
+    kind: scenario
+    question: سنّ المشرّع قانوناً يُطبَّق بأثر رجعي على وقائع سابقة على صدوره، فهل يتفق ذلك مع مقتضى سيادة القانون؟
+
+  # --- consumer_protection_overview.txt ---------------------------------------------
+  - id: consumer-001
+    source_doc: consumer_protection_overview.txt
+    kind: definitional
+    question: ما الغرض من قانون حماية المستهلك؟
+
+  - id: consumer-002
+    source_doc: consumer_protection_overview.txt
+    kind: scenario
+    question: أقنع بائع مستهلكاً بشراء جهاز عبر بيانات كاذبة عن مواصفاته، فما الحق المقرر للمستهلك في هذه الحالة؟
+
+  - id: consumer-003
+    source_doc: consumer_protection_overview.txt
+    kind: definitional
+    question: ما الجزاءات المقررة للمستهلك عند وجود عيب في السلعة أو الخدمة؟
+
+  - id: consumer-004
+    source_doc: consumer_protection_overview.txt
+    kind: scenario
+    question: استعمل تاجر أسلوب بيع ضاغطاً ألجأ به مستهلكاً للتعاقد، فهل يعد ذلك مخالفاً لقانون حماية المستهلك؟
+
+  - id: consumer-005
+    source_doc: consumer_protection_overview.txt
+    kind: definitional
+    question: هل يجوز للبائع استبعاد الضمانات الضمنية المقررة لصالح المستهلك؟
+
+  # --- criminal_law_overview.txt ----------------------------------------------------
+  - id: criminal-001
+    source_doc: criminal_law_overview.txt
+    kind: definitional
+    question: ما عناصر الركن المادي للجريمة؟
+
+  - id: criminal-002
+    source_doc: criminal_law_overview.txt
+    kind: scenario
+    question: صدر قانون جديد يجرّم فعلاً لم يكن مجرَّماً وقت ارتكابه، فهل يجوز معاقبة من ارتكبه قبل صدور القانون؟
+
+  - id: criminal-003
+    source_doc: criminal_law_overview.txt
+    kind: definitional
+    question: متى ينتفي الركن المعنوي للجريمة؟
+
+  - id: criminal-004
+    source_doc: criminal_law_overview.txt
+    kind: scenario
+    question: دافع شخص عن نفسه بالقوة اللازمة لصد اعتداء وشيك عليه، فهل يُسأل جنائياً عن فعله؟
+
+  - id: criminal-005
+    source_doc: criminal_law_overview.txt
+    kind: definitional
+    question: على من يقع عبء إثبات التهمة في الدعوى الجنائية؟
+
+  # --- defamation_overview.txt -------------------------------------------------------
+  - id: defamation-001
+    source_doc: defamation_overview.txt
+    kind: definitional
+    question: متى لا يعد إبداء الرأي تشهيراً؟
+
+  - id: defamation-002
+    source_doc: defamation_overview.txt
+    kind: scenario
+    question: نشر شخص عبارة عن آخر دون ذكر اسمه صراحة، لكن من يعرفه فهم أنه المقصود بها، فهل تقوم مسؤولية التشهير؟
+
+  - id: defamation-003
+    source_doc: defamation_overview.txt
+    kind: definitional
+    question: على من يقع عبء إثبات كذب العبارة المسندة في دعوى التشهير؟
+
+  - id: defamation-004
+    source_doc: defamation_overview.txt
+    kind: scenario
+    question: كتب شخص نقداً لاذعاً لأداء مسؤول عام في مسألة تتعلق بالشأن العام، فهل يشكل ذلك دفعاً في دعوى تشهير مرفوعة ضده؟
+
+  - id: defamation-005
+    source_doc: defamation_overview.txt
+    kind: definitional
+    question: ما شرط قيام مسؤولية التشهير من حيث نشر العبارة إلى الغير؟
+
+  # --- employment_law_overview.txt ----------------------------------------------------
+  - id: employment-001
+    source_doc: employment_law_overview.txt
+    kind: definitional
+    question: هل يجوز لصاحب العمل إنقاص أجر العامل المتفق عليه دون سبب مشروع؟
+
+  - id: employment-002
+    source_doc: employment_law_overview.txt
+    kind: scenario
+    question: كلّف صاحب عمل عاملاً بساعات عمل تتجاوز الحد الأقصى المقرر قانوناً دون أن يؤدي له أجراً إضافياً، فهل يعد ذلك مخالفاً؟
+
+  - id: employment-003
+    source_doc: employment_law_overview.txt
+    kind: definitional
+    question: ما الالتزامات الملقاة على عاتق صاحب العمل تجاه سلامة العمال؟
+
+  - id: employment-004
+    source_doc: employment_law_overview.txt
+    kind: scenario
+    question: رفض صاحب عمل توظيف متقدم لوظيفة بسبب إعاقته رغم توافر شروط الوظيفة فيه، فهل يعد ذلك مخالفاً للقانون؟
+
+  - id: employment-005
+    source_doc: employment_law_overview.txt
+    kind: definitional
+    question: متى ينتهي عقد العمل بإرادة أحد الطرفين؟
+
+  # --- evidence_overview.txt ------------------------------------------------------------
+  - id: evidence-001
+    source_doc: evidence_overview.txt
+    kind: definitional
+    question: ما معيار الإثبات المطلوب في الدعوى الجنائية مقارنة بالدعوى المدنية؟
+
+  - id: evidence-002
+    source_doc: evidence_overview.txt
+    kind: scenario
+    question: قدّم أحد الخصوم دليلاً متصلاً بواقعة الدعوى لكن قيمته الإثباتية محفوفة باللبس والمضرة، فهل يقبله القاضي حتماً؟
+
+  - id: evidence-003
+    source_doc: evidence_overview.txt
+    kind: definitional
+    question: بم يشهد الشاهد وفق الأصل في الإثبات؟
+
+  - id: evidence-004
+    source_doc: evidence_overview.txt
+    kind: scenario
+    question: نازع أحد الخصوم في شهادة شاهد الطرف الآخر وطلب مناقشته فيها، فهل له ذلك؟
+
+  - id: evidence-005
+    source_doc: evidence_overview.txt
+    kind: definitional
+    question: لمن تكون سلطة تقدير وزن الأدلة المطروحة في الدعوى؟
+
+  # --- family_law_overview.txt ------------------------------------------------------------
+  - id: family-001
+    source_doc: family_law_overview.txt
+    kind: definitional
+    question: ما الشروط الواجب توافرها لصحة عقد الزواج؟
+
+  - id: family-002
+    source_doc: family_law_overview.txt
+    kind: scenario
+    question: تزوج شخصان دون حضور شهود على العقد، فهل ينعقد الزواج صحيحاً؟
+
+  - id: family-003
+    source_doc: family_law_overview.txt
+    kind: definitional
+    question: بم ينحل الزواج بين الزوجين؟
+
+  - id: family-004
+    source_doc: family_law_overview.txt
+    kind: scenario
+    question: تنازع الأبوان بعد الطلاق على حضانة طفلهما الصغير، فما المعيار الذي يحكم الفصل في هذا النزاع؟
+
+  - id: family-005
+    source_doc: family_law_overview.txt
+    kind: definitional
+    question: ماذا تشمل نفقة الزوجة والأولاد؟
+
+  # --- intellectual_property_overview.txt -------------------------------------------------
+  - id: ip-001
+    source_doc: intellectual_property_overview.txt
+    kind: definitional
+    question: متى يثبت حق المؤلف للمصنف الأدبي أو الفني؟
+
+  - id: ip-002
+    source_doc: intellectual_property_overview.txt
+    kind: scenario
+    question: طور مخترع جهازاً جديداً ينطوي على خطوة ابتكارية وقابل للتطبيق الصناعي، فهل يحق له طلب براءة اختراع عنه؟
+
+  - id: ip-003
+    source_doc: intellectual_property_overview.txt
+    kind: definitional
+    question: ما وظيفة العلامة التجارية وما الذي تحول حمايتها دونه؟
+
+  - id: ip-004
+    source_doc: intellectual_property_overview.txt
+    kind: scenario
+    question: سرّب موظف سابق معلومات تجارية سرية كانت تمنح شركته السابقة ميزة تنافسية، فهل تعد هذه المعلومات محمية بوصفها سراً تجارياً؟
+
+  - id: ip-005
+    source_doc: intellectual_property_overview.txt
+    kind: definitional
+    question: متى تزول الحماية المقررة للسر التجاري؟
+
+  # --- intentional_torts_overview.txt -------------------------------------------------------
+  - id: itorts-001
+    source_doc: intentional_torts_overview.txt
+    kind: definitional
+    question: ما الذي يميز الفعل الضار العمدي عن الإهمال؟
+
+  - id: itorts-002
+    source_doc: intentional_torts_overview.txt
+    kind: scenario
+    question: هدد شخص آخر بإيذائه على نحو بعث في نفسه خوفاً وشيكاً من الأذى دون أن يلمسه فعلاً، فهل تقوم مسؤوليته؟
+
+  - id: itorts-003
+    source_doc: intentional_torts_overview.txt
+    kind: definitional
+    question: هل يشترط لقيام المسؤولية عن الاعتداء على النفس إثبات ضرر مالي مستقل؟
+
+  - id: itorts-004
+    source_doc: intentional_torts_overview.txt
+    kind: scenario
+    question: دخل شخص عقار جاره دون إذنه وأتلف جزءاً من ممتلكاته، فما وصف هذا الفعل قانوناً؟
+
+  - id: itorts-005
+    source_doc: intentional_torts_overview.txt
+    kind: definitional
+    question: بم يجوز للمدعى عليه أن يدفع دعوى التعدي على المال؟
+
+  # --- landlord_tenant_overview.txt -----------------------------------------------------------
+  - id: landlord-001
+    source_doc: landlord_tenant_overview.txt
+    kind: definitional
+    question: ما طبيعة عقد الإيجار وما الذي يميزه عن غيره من العقود؟
+
+  - id: landlord-002
+    source_doc: landlord_tenant_overview.txt
+    kind: scenario
+    question: أجّر مستأجر المحل الذي استأجره من الباطن دون إذن المؤجر، فهل يعد ذلك تصرفاً جائزاً؟
+
+  - id: landlord-003
+    source_doc: landlord_tenant_overview.txt
+    kind: definitional
+    question: بم يلتزم المستأجر تجاه العين المؤجرة عند ردها للمؤجر؟
+
+  - id: landlord-004
+    source_doc: landlord_tenant_overview.txt
+    kind: scenario
+    question: سلّم المؤجر العين المؤجرة للمستأجر وفيها عيب خفي يحول دون الانتفاع بها، فهل يضمن المؤجر هذا العيب؟
+
+  - id: landlord-005
+    source_doc: landlord_tenant_overview.txt
+    kind: definitional
+    question: متى ينتهي عقد الإيجار بالفسخ؟
+
+  # --- negotiable_instruments_overview.txt -----------------------------------------------------
+  - id: negotiable-001
+    source_doc: negotiable_instruments_overview.txt
+    kind: definitional
+    question: ما أبرز خصائص الأوراق التجارية التي تميزها عن غيرها من الصكوك؟
+
+  - id: negotiable-002
+    source_doc: negotiable_instruments_overview.txt
+    kind: scenario
+    question: تلقى شخص كمبيالة مقابل قيمة وبحسن نية دون علمه بوجود عيب في الالتزام الأصلي، فهل يحتج عليه بهذا العيب؟
+
+  - id: negotiable-003
+    source_doc: negotiable_instruments_overview.txt
+    kind: definitional
+    question: ما الأثر المترتب على تعليق الوفاء بالورقة التجارية على شرط؟
+
+  - id: negotiable-004
+    source_doc: negotiable_instruments_overview.txt
+    kind: scenario
+    question: امتنع المسحوب عليه عن الوفاء بالكمبيالة في ميعاد استحقاقها، فعلى من يجوز للحامل أن يرجع؟
+
+  - id: negotiable-005
+    source_doc: negotiable_instruments_overview.txt
+    kind: definitional
+    question: بم يلتزم الساحب أو محرر السند تجاه حامل الورقة التجارية؟
+
+  # --- product_liability_overview.txt -----------------------------------------------------------
+  - id: prodliability-001
+    source_doc: product_liability_overview.txt
+    kind: definitional
+    question: من يجوز أن يرجع عليه المضرور في سلسلة توريد المنتج المعيب؟
+
+  - id: prodliability-002
+    source_doc: product_liability_overview.txt
+    kind: scenario
+    question: أصيب مستهلك بضرر بسبب نقص التحذيرات المرافقة لمنتج بشأن مخاطر متوقعة، فما نوع العيب الذي يوصف به هذا المنتج؟
+
+  - id: prodliability-003
+    source_doc: product_liability_overview.txt
+    kind: definitional
+    question: ما الذي يكفي أن يثبته المضرور لقيام المسؤولية الموضوعية عن المنتج المعيب؟
+
+  - id: prodliability-004
+    source_doc: product_liability_overview.txt
+    kind: scenario
+    question: استعمل مستهلك منتجاً على نحو غير متوقع أدى إلى إصابته، فهل يستطيع الصانع أن يدفع مسؤوليته بذلك؟
+
+  - id: prodliability-005
+    source_doc: product_liability_overview.txt
+    kind: definitional
+    question: هل يستطيع المنتِج أن يدفع مسؤوليته بإثبات تغيير طرأ على المنتج بعد خروجه من سيطرته؟
+
+  # --- property_law_overview.txt -------------------------------------------------------------
+  - id: property-001
+    source_doc: property_law_overview.txt
+    kind: definitional
+    question: متى يجوز حرمان المالك من ملكه؟
+
+  - id: property-002
+    source_doc: property_law_overview.txt
+    kind: scenario
+    question: سيطر شخص سيطرة فعلية هادئة وظاهرة ومستمرة على عقار لمدة طويلة بنية تملكه، فما الأثر القانوني المحتمل لهذه الحيازة؟
+
+  - id: property-003
+    source_doc: property_law_overview.txt
+    kind: definitional
+    question: ما الحقوق العينية المتفرعة التي ترد على ملك الغير؟
+
+  - id: property-004
+    source_doc: property_law_overview.txt
+    kind: scenario
+    question: استعمل مالك عقاره على نحو ألحق ضرراً غير مألوف بجاره، فهل يعد ذلك استعمالاً مشروعاً لحقه؟
+
+  - id: property-005
+    source_doc: property_law_overview.txt
+    kind: definitional
+    question: هل تعد الحيازة قرينة على الملكية في المنقول؟
+
+  # --- remedies_overview.txt ------------------------------------------------------------------
+  - id: remedies-001
+    source_doc: remedies_overview.txt
+    kind: definitional
+    question: ما الهدف الذي يسعى التعويض النقدي إلى تحقيقه؟
+
+  - id: remedies-002
+    source_doc: remedies_overview.txt
+    kind: scenario
+    question: طالب مدعٍ بتعويض عن ضرر كان بإمكانه تجنبه باتخاذ تدبير معقول، فهل يدخل هذا الضرر في التعويض؟
+
+  - id: remedies-003
+    source_doc: remedies_overview.txt
+    kind: definitional
+    question: متى يأمر القاضي بالتنفيذ العيني بدلاً من التعويض النقدي؟
+
+  - id: remedies-004
+    source_doc: remedies_overview.txt
+    kind: scenario
+    question: أسهم خطأ المضرور نفسه في وقوع الضرر الذي أصابه، فكيف يؤثر ذلك على مقدار التعويض المستحق له؟
+
+  - id: remedies-005
+    source_doc: remedies_overview.txt
+    kind: definitional
+    question: هل يعوض القانون عن الضرر البعيد أو المحتمل؟
+
+  # --- tort_principles.txt (negligence) ---------------------------------------------------------
+  - id: negligence-001
+    source_doc: tort_principles.txt
+    kind: definitional
+    question: بم يتحقق إخلال المدعى عليه بواجب العناية الملقى عليه؟
+
+  - id: negligence-002
+    source_doc: tort_principles.txt
+    kind: scenario
+    question: تصرف المدعى عليه معتقداً أن سلوكه كان معقولاً وفق تقديره الشخصي، فهل يكفي ذلك لنفي إخلاله بواجب العناية؟
+
+  - id: negligence-003
+    source_doc: tort_principles.txt
+    kind: definitional
+    question: ما الذي يجب على المدعي إثباته لقيام مسؤولية الإهمال من حيث الضرر؟
+
+  - id: negligence-004
+    source_doc: tort_principles.txt
+    kind: scenario
+    question: وقع حدث عارض غير متوقع بعد إخلال المدعى عليه أدى إلى تفاقم الضرر، فهل تظل علاقة السببية قائمة بين إخلاله والضرر النهائي؟
+
+  - id: negligence-005
+    source_doc: tort_principles.txt
+    kind: definitional
+    question: ما الأضرار التي قد يشملها التعويض في دعوى الإهمال؟
+
+  # --- wills_probate_overview.txt ----------------------------------------------------------------
+  - id: wills-001
+    source_doc: wills_probate_overview.txt
+    kind: definitional
+    question: ما الشروط الواجب توافرها في الموصي لصحة وصيته؟
+
+  - id: wills-002
+    source_doc: wills_probate_overview.txt
+    kind: scenario
+    question: أوصى شخص بأكثر من ثلث تركته لغير وارث، فهل تنفذ هذه الوصية دون قيد؟
+
+  - id: wills-003
+    source_doc: wills_probate_overview.txt
+    kind: definitional
+    question: ماذا يسدد من التركة قبل توزيعها على المستحقين؟
+
+  - id: wills-004
+    source_doc: wills_probate_overview.txt
+    kind: scenario
+    question: توفي شخص دون أن يترك وصية صحيحة، فكيف تنتقل تركته؟
+
+  - id: wills-005
+    source_doc: wills_probate_overview.txt
+    kind: definitional
+    question: بم يلتزم من يتولى تصفية التركة؟

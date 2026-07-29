@@ -1,0 +1,25 @@
+# Second virtualenv only - NOT needed to run the server, and NOT installed into
+# the same .venv as requirements.txt. Torch alone is ~2.5GB with its own pinned
+# numpy/typing-extensions; letting it near the FastAPI server's venv risks breaking
+# the API you're actively demoing.
+#
+# Setup (from backend/):
+#   py -3.12 -m venv .venv-train
+#   .venv-train\Scripts\pip install torch --index-url https://download.pytorch.org/whl/cu126
+#   .venv-train\Scripts\pip install -r requirements-train.txt
+#
+# torch needs a CUDA-specific --index-url that a plain requirements.txt line can't
+# express, so it's installed separately, first, then this file for the rest.
+#
+# bitsandbytes is here (not conditional) because the 6GB GTX 1660 Ti this project
+# trains on cannot hold gemma-4-e4b or Qwen3-4B in fp16/bf16 - 4-bit (QLoRA) is not
+# an optimization here, it is the only way any of this loads at all.
+
+transformers
+peft
+trl
+accelerate
+bitsandbytes
+sentencepiece
+protobuf
+huggingface_hub

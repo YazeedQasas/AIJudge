@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Judge — LoRA Roadmap, 29 July 2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --paper: #F2F4F7;
+    --surface: #FFFFFF;
+    --surface-2: #E8ECF1;
+    --ink: #0F1620;
+    --ink-2: #3A4855;
+    --slate: #5C6E80;
+    --rule: #D3DAE2;
+    --accent: #0B7C8A;
+    --accent-soft: #E0F0F2;
+    --flag: #A8620A;
+    --flag-soft: #FAEFDF;
+    --verdict: #2C7A5B;
+    --verdict-soft: #E2F0EA;
+    --dead: #9B2C4F;
+    --dead-soft: #FAE6EC;
+    --shadow: 0 1px 2px rgba(15,22,32,.06), 0 8px 24px -12px rgba(15,22,32,.18);
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
+    --col: 70ch;
+    --wide: 112ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0C1116; --surface: #141C24; --surface-2: #1C2630;
+      --ink: #E2E9EF; --ink-2: #B4C1CD; --slate: #8B9CAC; --rule: #26313D;
+      --accent: #45BCC6; --accent-soft: #103034;
+      --flag: #D9962F; --flag-soft: #2E2313;
+      --verdict: #55B98C; --verdict-soft: #12291F;
+      --dead: #E0708F; --dead-soft: #2C1520;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0C1116; --surface: #141C24; --surface-2: #1C2630;
+    --ink: #E2E9EF; --ink-2: #B4C1CD; --slate: #8B9CAC; --rule: #26313D;
+    --accent: #45BCC6; --accent-soft: #103034;
+    --flag: #D9962F; --flag-soft: #2E2313;
+    --verdict: #55B98C; --verdict-soft: #12291F;
+    --dead: #E0708F; --dead-soft: #2C1520;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+  :root[data-theme="light"] {
+    --paper: #F2F4F7; --surface: #FFFFFF; --surface-2: #E8ECF1;
+    --ink: #0F1620; --ink-2: #3A4855; --slate: #5C6E80; --rule: #D3DAE2;
+    --accent: #0B7C8A; --accent-soft: #E0F0F2;
+    --flag: #A8620A; --flag-soft: #FAEFDF;
+    --verdict: #2C7A5B; --verdict-soft: #E2F0EA;
+    --dead: #9B2C4F; --dead-soft: #FAE6EC;
+    --shadow: 0 1px 2px rgba(15,22,32,.06), 0 8px 24px -12px rgba(15,22,32,.18);
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; padding: 0 24px 96px;
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .col  { max-width: var(--col);  margin-inline: auto; }
+  .wide { max-width: var(--wide); margin-inline: auto; }
+
+  h1,h2,h3,h4 { font-weight: 800; letter-spacing: -.022em; text-wrap: balance; line-height: 1.15; }
+  h1 { font-size: clamp(2rem, 5vw, 2.9rem); margin: 0 0 .5rem; }
+  h2 { font-size: 1.55rem; margin: 0 0 .35rem; }
+  h3 { font-size: 1.1rem;  margin: 0 0 .3rem; letter-spacing: -.012em; }
+  h4 { font-size: .95rem;  margin: 0 0 .3rem; letter-spacing: 0; }
+  p  { margin: 0 0 1.05rem; }
+  a  { color: var(--accent); }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--slate); margin: 0 0 .7rem;
+  }
+  code, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  code { font-size: .855em; background: var(--surface-2); padding: .12em .38em; border-radius: 3px; }
+
+  header.mast { border-bottom: 1px solid var(--rule); padding: 68px 0 40px; margin-bottom: 40px; }
+  .lede { font-size: 1.2rem; line-height: 1.55; color: var(--ink-2); max-width: 62ch; margin: 0 0 1.8rem; }
+  .facts { display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 6px;
+           overflow: hidden; background: var(--surface); }
+  .fact { flex: 1 1 120px; padding: 14px 18px; border-right: 1px solid var(--rule); }
+  .fact:last-child { border-right: 0; }
+  .fact dt { font-family: var(--mono); font-size: .66rem; letter-spacing: .1em;
+             text-transform: uppercase; color: var(--slate); margin-bottom: 3px; }
+  .fact dd { margin: 0; font-family: var(--mono); font-size: 1.2rem; font-weight: 600;
+             font-variant-numeric: tabular-nums; }
+
+  /* progress rail: four segments, A / S0 / B / C */
+  .rail { display: flex; border-radius: 6px; overflow: hidden; height: 34px; margin: 22px 0 6px;
+          border: 1px solid var(--rule); background: var(--surface-2); }
+  .rail-seg { display: flex; align-items: center; justify-content: center; font-family: var(--mono);
+              font-size: .68rem; font-weight: 700; letter-spacing: .05em; color: #fff;
+              border-right: 1px solid rgba(0,0,0,.12); white-space: nowrap; overflow: hidden; }
+  .rail-seg:last-child { border-right: 0; }
+  .rail-seg.done   { background: var(--verdict); }
+  .rail-seg.active { background: var(--accent); background-image: linear-gradient(90deg, var(--accent) 0 55%, var(--surface-2) 55%); color: var(--ink); }
+  .rail-seg.todo   { background: var(--surface-2); color: var(--slate); }
+  .rail-key { display: flex; gap: 18px; flex-wrap: wrap; font-size: .78rem; color: var(--slate); margin: 0 0 1.8rem; }
+  .rail-key span { display: inline-flex; align-items: center; gap: 6px; }
+  .rail-key i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  section { margin-bottom: 60px; }
+  .sec-head { margin-bottom: 1.5rem; }
+  .sec-head > p { color: var(--slate); margin: 0; }
+
+  .stage { display: grid; grid-template-columns: 60px 1fr auto; gap: 0 16px; padding: 14px 0;
+           border-top: 1px solid var(--rule); align-items: start; }
+  .stage:last-of-type { border-bottom: 1px solid var(--rule); }
+  .stage-id { font-family: var(--mono); font-size: .82rem; font-weight: 700; color: var(--accent); padding-top: 2px; }
+  .stage-body p { margin: 0; color: var(--ink-2); font-size: .93rem; }
+  .stage-body strong { color: var(--ink); }
+  .stage-status { padding-top: 2px; }
+
+  .gate, .finding, .verdictbox {
+    border-radius: 5px; padding: 20px 24px; margin: 24px 0;
+  }
+  .gate { background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--accent); box-shadow: var(--shadow); }
+  .gate .eyebrow { color: var(--accent); margin-bottom: .45rem; }
+  .finding { background: var(--flag-soft); border: 1px solid var(--flag); }
+  .finding .eyebrow { color: var(--flag); }
+  .verdictbox { background: var(--verdict-soft); border: 1px solid var(--verdict); }
+  .verdictbox .eyebrow { color: var(--verdict); }
+  .gate p, .finding p, .verdictbox p { margin: 0; font-size: .95rem; }
+  .gate p + p, .finding p + p, .verdictbox p + p { margin-top: .6rem; }
+
+  .pill { display: inline-block; font-family: var(--mono); font-size: .68rem; letter-spacing: .04em;
+          padding: 2px 9px; border-radius: 100px; white-space: nowrap; font-weight: 600; }
+  .p-pass  { background: var(--verdict-soft); color: var(--verdict); }
+  .p-fail  { background: var(--flag-soft);    color: var(--flag); }
+  .p-code  { background: var(--surface-2);    color: var(--slate); }
+  .p-model { background: var(--accent-soft);  color: var(--accent); }
+  .p-wired { background: var(--flag-soft);    color: var(--flag); }
+
+  .commits { border-top: 1px solid var(--rule); }
+  .commit { display: grid; grid-template-columns: 84px 1fr; gap: 0 18px; padding: 10px 0;
+            border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .commit .sha { font-family: var(--mono); font-size: .8rem; color: var(--accent); }
+  .commit .msg { font-size: .9rem; }
+
+  .pull { border-left: 3px solid var(--accent); padding: 4px 0 4px 20px; margin: 26px 0;
+          font-size: 1.06rem; color: var(--ink-2); }
+  .pull strong { color: var(--ink); font-weight: 700; }
+
+  pre { background: var(--surface); border: 1px solid var(--rule); border-radius: 5px;
+        padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: .8rem;
+        line-height: 1.55; margin: 20px 0; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  ul.tight, ol.tight { margin: 0 0 1.05rem; padding-left: 1.3rem; }
+  ul.tight li, ol.tight li { margin-bottom: .45rem; }
+
+  .toc { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 24px; margin: 0 0 52px; }
+  .toc h4 { font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--slate); font-weight: 600; margin-bottom: .7rem; }
+  .toc ol { margin: 0; padding-left: 1.2rem; font-size: .93rem; columns: 2; column-gap: 32px; }
+  .toc li { margin-bottom: .3rem; break-inside: avoid; }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 24px; margin-top: 64px;
+           color: var(--slate); font-size: .87rem; }
+
+  @media (prefers-reduced-motion: no-preference) { a { transition: opacity .15s ease; } a:hover { opacity: .72; } }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  @media (max-width: 640px) {
+    body { font-size: 16px; padding: 0 18px 64px; }
+    .stage { grid-template-columns: 40px 1fr; gap: 4px 10px; }
+    .stage-status { grid-column: 2; }
+    .toc ol { columns: 1; }
+    .commit { grid-template-columns: 72px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="col">
+    <p class="eyebrow">AI Judge · LoRA fine-tuning · roadmap · 29 July 2026</p>
+    <h1>Where the LoRA thread stands</h1>
+    <p class="lede">
+      Started as “where would fine-tuning even go in this codebase?”. Since then: a measuring
+      instrument got built before the thing it was meant to measure, one of its three original
+      objectives evaporated under its own baseline, and the student model changed after a spike
+      caught an architecture mismatch before it cost ten hours of dataset review.
+    </p>
+    <dl class="facts">
+      <div class="fact"><dt>Stage A</dt><dd>9 / 9 done</dd></div>
+      <div class="fact"><dt>Spike 0</dt><dd>proven</dd></div>
+      <div class="fact"><dt>Stage B</dt><dd>6 done · 2 wired</dd></div>
+      <div class="fact"><dt>Stage C</dt><dd>0 / 10</dd></div>
+      <div class="fact"><dt>Student</dt><dd>Qwen3-4B</dd></div>
+      <div class="fact"><dt>VRAM</dt><dd>6 GB</dd></div>
+    </dl>
+
+    <div class="rail" role="img" aria-label="Stage A complete, Spike 0 complete, Stage B about three-quarters wired, Stage C not started">
+      <div class="rail-seg done" style="flex:9">A · 9/9</div>
+      <div class="rail-seg done" style="flex:1.4">S0</div>
+      <div class="rail-seg active" style="flex:11">B · 6✓ 2◐ 3○</div>
+      <div class="rail-seg todo" style="flex:10">C · 0/10</div>
+    </div>
+    <p class="rail-key">
+      <span><i style="background:var(--verdict)"></i> done</span>
+      <span><i style="background:var(--accent)"></i> in progress — you are here</span>
+      <span><i style="background:var(--flag)"></i> wired, not yet run</span>
+      <span><i style="background:var(--surface-2)"></i> not started</span>
+    </p>
+    <p style="font-size:.8rem; color:var(--slate); margin:.6rem 0 0;">Rescanned same day, after B7 and B8 code landed — see the <a href="#revision">revision note</a>.</p>
+  </div>
+</header>
+
+<nav class="toc col">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#were">Where we were</a></li>
+    <li><a href="#stageA">Stage A — the instrument (done)</a></li>
+    <li><a href="#spike0">Spike 0 — the de-risk (done)</a></li>
+    <li><a href="#rescope">The re-scope</a></li>
+    <li><a href="#stageB">Stage B — the dataset (in progress)</a></li>
+    <li><a href="#stageC">Where we're going — Stage C</a></li>
+    <li><a href="#gates">The two decision gates ahead</a></li>
+    <li><a href="#revision">Revision note</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ================= WERE ================= -->
+<section class="col" id="were">
+  <div class="sec-head">
+    <p class="eyebrow">01 · Where we were</p>
+    <h2>Before this thread: a prompt, and a five-case guess</h2>
+  </div>
+  <p>
+    Prompt versioning (v1 → v2) had just shipped. The eval harness scored exactly one axis —
+    prompt version — over <strong>5 hand-written cases</strong>, three of them answerable. Results
+    were printed to a terminal and discarded; nothing was persisted, nothing was judged
+    independently of the model being judged.
+  </p>
+  <p>
+    The plan going in named three LoRA objectives, all assumed still open: <strong>(a)</strong>
+    format and citation discipline, <strong>(b)</strong> refusal calibration under weak retrieval,
+    <strong>(c)</strong> Arabic register. There was no way yet to tell which of the three the base
+    model already handled — that gap is exactly what Stage A exists to close.
+  </p>
+</section>
+
+<!-- ================= STAGE A ================= -->
+<section class="col" id="stageA">
+  <div class="sec-head">
+    <p class="eyebrow">02 · Where we are — Stage A</p>
+    <h2>The instrument got built first, and it was right to</h2>
+  </div>
+  <p>
+    Nine increments, each a small commit, all landed before any training data existed:
+  </p>
+
+  <div class="commits">
+    <div class="commit"><span class="sha mono">efcf103</span><span class="msg">Add prompt versioning, eval harness, and prompt testing page</span></div>
+    <div class="commit"><span class="sha mono">99413b9</span><span class="msg">Add a model axis alongside the prompt-version axis <span style="color:var(--slate)">— A1–A3</span></span></div>
+    <div class="commit"><span class="sha mono">0f19489</span><span class="msg">Score (prompt version × model) variants, not prompt versions alone <span style="color:var(--slate)">— A4</span></span></div>
+    <div class="commit"><span class="sha mono">c371a9f</span><span class="msg">Separate a model declining from the gate refusing, and persist run records <span style="color:var(--slate)">— A5, A6</span></span></div>
+    <div class="commit"><span class="sha mono">cc517db</span><span class="msg">Grow the eval set to 59 cases, with every label verified against retrieval <span style="color:var(--slate)">— A7</span></span></div>
+    <div class="commit"><span class="sha mono">3f2d158</span><span class="msg">Add an independent Claude judge, and document the miscalibrated threshold <span style="color:var(--slate)">— A8</span></span></div>
+    <div class="commit"><span class="sha mono">2129869</span><span class="msg">Baseline: 118 records, and the format objective is already at ceiling <span style="color:var(--slate)">— A9</span></span></div>
+  </div>
+
+  <div class="gate">
+    <p class="eyebrow">Gate 1 — passed</p>
+    <p><strong>A9 baseline, committed.</strong> <code>eval/results/baseline-20260728-094100.jsonl</code>,
+    41 answered cases on prompt v2: <code>ruling_line_present</code> 41/41,
+    <code>has_citation</code> 41/41.</p>
+  </div>
+</section>
+
+<!-- ================= SPIKE 0 ================= -->
+<section class="col" id="spike0">
+  <div class="sec-head">
+    <p class="eyebrow">03 · Where we are — Spike 0</p>
+    <h2>The round trip, proven on garbage data</h2>
+  </div>
+  <p>
+    Before any real dataset work: prove HF weights can become a GGUF LM Studio will load, on
+    5 lines of throwaway data. Full pipeline run, in order:
+  </p>
+  <pre><code>HF safetensors → 4-bit (bitsandbytes nf4) load → rank-4 LoRA
+  (target_modules: q/k/v/o_proj, gate/up/down_proj — real names, not "all-linear")
+→ 10-step train → merge on CPU in fp16
+→ convert_hf_to_gguf.py (llama.cpp b10174) → llama-quantize to Q4_K_M
+→ llama-server → /v1/chat/completions → coherent, correct answer</code></pre>
+  <p>Peak VRAM during training: <strong>4.52 GB</strong>, on a measured 6 GB card.</p>
+
+  <div class="finding">
+    <p class="eyebrow">Student switched mid-spike</p>
+    <p>
+      <code>google/gemma-4-e4b</code> turned out to be <strong>8B raw params, BF16-only, and
+      multimodal</strong> (<code>...ForConditionalGeneration</code>) — a Gemma-3n MatFormer with
+      per-layer embeddings, not the plain 4B text model its name implies. Exactly the risk Spike 0
+      was designed to catch, and a bad fit for 6 GB VRAM.
+    </p>
+    <p>
+      Switched to <code>Qwen/Qwen3-4B-Instruct-2507</code> — plain dense <code>Qwen3ForCausalLM</code>,
+      ungated, ~8 GB in bf16, first-class PEFT + llama.cpp support. Gemma stays what the live app
+      serves; Qwen is the fine-tuning student.
+    </p>
+  </div>
+
+  <p>
+    Two real gotchas, worth carrying into Stage C: the GTX 1660 Ti (Turing, no native bf16) needs
+    plain <strong>fp32</strong> adapter training, not <code>fp16=True</code>/GradScaler
+    (<code>NotImplementedError</code>, not a precision tradeoff) — trivial cost at 8M trainable
+    params. And with no local C/C++ toolchain, llama.cpp came from prebuilt Windows CUDA binaries,
+    not a source build.
+  </p>
+</section>
+
+<!-- ================= RESCOPE ================= -->
+<section class="col" id="rescope">
+  <div class="sec-head">
+    <p class="eyebrow">04 · Where we are — the re-scope</p>
+    <h2>One of three objectives had nothing left to fix</h2>
+  </div>
+  <p>
+    The A9 baseline scored objective (a) — format and citation discipline — at ceiling already:
+    41/41 on both scorers, on prompt v2 alone. Prompting had already solved it.
+  </p>
+  <p>
+    A second look at the “declines without citing sources” gap (<code>no_citation_when_declining</code>
+    0/12) found the same thing: those 12 records already cite what's supported, name the gap, then
+    stop — a coherent structure, not a defect. The eval was scoring a zero-citation rule against
+    partial-coverage answers; a labeling gap in the eval, not a model gap. Still open, independent
+    of which LoRA objective ships.
+  </p>
+  <div class="verdictbox">
+    <p class="eyebrow">Decision</p>
+    <p>
+      Proceed with the LoRA anyway, explicitly as a <strong>learning exercise</strong> — PEFT/TRL
+      mechanics, quantization, distillation, evaluation design — not a product fix. The measured
+      gap on the current objective is ~0, and that's known going in, not discovered at the end.
+    </p>
+  </div>
+</section>
+
+<!-- ================= STAGE B ================= -->
+<section class="col" id="stageB">
+  <div class="sec-head">
+    <p class="eyebrow">05 · Where we are — Stage B</p>
+    <h2>The dataset pipeline is wired; the dataset itself isn't built yet</h2>
+  </div>
+  <p>
+    Six of eleven increments done and proven; two more — <strong>B7</strong> and
+    <strong>B8</strong> — got written since this doc's first pass today, but neither has
+    been run to completion yet. <code>data/v1/drafts.jsonl</code> still holds exactly the
+    one <code>answered</code> example from the original wiring smoke test.
+  </p>
+
+  <div class="stage">
+    <span class="stage-id">B1</span>
+    <div class="stage-body"><p><strong>schema.py + validate.py</strong> — the <code>Example</code> dataclass, JSONL read/write, and a gate script that re-checks contamination + auto-gate from scratch rather than trusting cached results.</p></div>
+    <span class="stage-status"><span class="pill p-pass">done</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B2</span>
+    <div class="stage-body"><p><strong>teacher.py, local</strong> — <code>Teacher</code> ABC + registry, mirroring <code>eval/judge.py</code>'s idiom.</p></div>
+    <span class="stage-status"><span class="pill p-pass">done</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B3</span>
+    <div class="stage-body"><p><strong>ClaudeTeacher</strong> — edit mode default: minimally repairs the base model's own answer rather than drafting from scratch, to keep the target near the student's distribution.</p></div>
+    <span class="stage-status"><span class="pill p-pass">done</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B4</span>
+    <div class="stage-body"><p><strong>seed_questions.yaml</strong> — 95 hand-written seeds, tagged by corpus document and kind.</p></div>
+    <span class="stage-status"><span class="pill p-pass">done</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B5</span>
+    <div class="stage-body"><p><strong>build_dataset.py</strong> — the real pipeline end to end: retrieval → sources block → prompt → base-model draft → teacher edit → citation check → auto-gate → <code>Example</code>. Smoke-tested: one example drafted and written to <code>data/v1/drafts.jsonl</code>.</p></div>
+    <span class="stage-status"><span class="pill p-pass">done</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B6</span>
+    <div class="stage-body"><p><strong>contamination.py + gate.py</strong> — hard-errors on an exact match against <code>eval/cases.yaml</code>, warns on high trigram overlap; auto-gate reuses <code>eval/scorers.py</code> wholesale so training data can't ship with an invalid citation.</p></div>
+    <span class="stage-status"><span class="pill p-pass">done</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B7</span>
+    <div class="stage-body"><p><strong>Negative constructions</strong> — <code>build_dataset.py --construction {declined,mismatched,partial}</code> now builds all three: <em>declined</em> reads 13 hand-written <code>declined_seeds.yaml</code> questions that clear the relevance gate but ask for a figure their document conspicuously omits (verified live against Qdrant when written); <em>mismatched</em> forces retrieval onto a deliberately wrong document via <code>search(..., source=)</code>; <em>partial</em> mixes 2 genuinely on-topic chunks with off-topic filler from an unrelated doc, so the target cites only what's relevant and still closes with a ruling line. Code complete; not yet run — no construction has produced an example in <code>drafts.jsonl</code> yet.</p></div>
+    <span class="stage-status"><span class="pill p-wired">wired</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B8</span>
+    <div class="stage-body"><p><strong>expand_seeds.py</strong> — asks the local model for 3 paraphrases per seed (formal reword, colloquial reword, a kind-flip between scenario/definitional), keeping only variants whose own retrieval still tops out on the seed's source document above the relevance gate, then re-checks the batch against <code>eval/cases.yaml</code> contamination. Written and import-clean; not yet run to completion — no <code>expanded_questions.yaml</code> exists yet, so the 95 seeds haven't grown toward ~380.</p></div>
+    <span class="stage-status"><span class="pill p-wired">wired</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B9</span>
+    <div class="stage-body"><p><strong>Full draft run</strong> over the expanded question set with the Claude teacher.</p></div>
+    <span class="stage-status"><span class="pill p-code">not started</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B10</span>
+    <div class="stage-body"><p><strong>review.py + wave 1</strong> — accept / edit / reject over the first ~120 drafts, decisions appended immediately so an interrupted pass costs nothing.</p></div>
+    <span class="stage-status"><span class="pill p-code">not started</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">B11</span>
+    <div class="stage-body"><p><strong>split.py + manifest.yaml</strong> — 85/15 split grouped by <code>source_docs</code>, stratified by <code>kind</code>, with 3–4 whole documents held out entirely so “learned the format” is distinguishable from “memorized the corpus.” <code>validate.py</code> exits green.</p></div>
+    <span class="stage-status"><span class="pill p-code">not started</span></span>
+  </div>
+</section>
+
+<!-- ================= STAGE C ================= -->
+<section class="col" id="stageC">
+  <div class="sec-head">
+    <p class="eyebrow">06 · Where we're going — Stage C</p>
+    <h2>Training and serving, once B7–B11 land</h2>
+  </div>
+  <p>
+    The second virtualenv (<code>.venv-train</code>, torch/transformers/peft/trl/bitsandbytes) already
+    exists and already trained Spike 0 — that groundwork carries forward. Everything else in Stage C
+    is untouched.
+  </p>
+
+  <div class="stage">
+    <span class="stage-id">C2</span>
+    <div class="stage-body"><p><strong>token_stats.py</strong> — tokenize every prompt+answer, print p50/p90/p95/max. Sets <code>max_seq_length</code> from the real data, not a guess — each example carries ~2,500 chars of Arabic retrieval context before the question even starts.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C3</span>
+    <div class="stage-body"><p><strong>check_template.py</strong> — render one record through the exact chat template LM Studio applies at inference; a mismatch here degrades silently, not with a crash.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C4</span>
+    <div class="stage-body"><p><strong>train_lora.py</strong> — pilot run on the first 120 reviewed records. fp32 adapter (Turing has no bf16), rank ≤16, ≤2 epochs, per-epoch checkpoints evaluated separately.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C5</span>
+    <div class="stage-body"><p><strong>merge.py + smoke_test.py</strong> — merge into the bf16 base (never into 4-bit-quantized weights), then 3 held-out prompts through <code>transformers</code> to isolate merge bugs from GGUF conversion bugs.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C6</span>
+    <div class="stage-body"><p><strong>GGUF convert + quantize + serve</strong> — same path Spike 0 already proved once; Q4_K_M plus a kept Q8_0 in case quantization noise erases a rank-16 delta.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C7</span>
+    <div class="stage-body"><p><strong>app/models/lora_v1.md</strong> — the model card, with <code>prompt_version</code> recorded so a future prompt v3 can't silently pair with this adapter.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C8</span>
+    <div class="stage-body"><p><strong>Pilot before/after scorecard</strong> — <code>run_eval --prompts v2 --models base lora_v1 --judge claude</code>, same seed and cases as A9. Paired per-case deltas, not aggregate rates.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C9</span>
+    <div class="stage-body"><p><strong>memorization_probe.py</strong> — ask a corpus question with no sources in the prompt; a correct answer means the LoRA memorized rather than learned format.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+  <div class="stage">
+    <span class="stage-id">C10</span>
+    <div class="stage-body"><p><strong>Full retrain + final scorecard</strong> — only if C8 justifies the remaining ~280 records of human review.</p></div>
+    <span class="stage-status"><span class="pill p-code">planned</span></span>
+  </div>
+</section>
+
+<!-- ================= GATES AHEAD ================= -->
+<section class="col" id="gates">
+  <div class="sec-head">
+    <p class="eyebrow">07 · What actually decides the next move</p>
+    <h2>Two gates already passed, one still ahead</h2>
+  </div>
+  <p class="pull">
+    <strong>A9 said the yardstick was ready.</strong> Spike 0 said the round trip works, on this GPU,
+    with this student. Neither says the LoRA is worth finishing — that's <strong>C8</strong>: the
+    pilot scorecard on 120 records, before spending the other ten hours of review on B12/C10.
+  </p>
+  <p>
+    Next concrete step is running what B7 and B8 already wired: draft a handful of examples through
+    each of the three negative constructions and confirm they actually reach <code>drafts.jsonl</code>
+    instead of <code>auto_rejected</code>, then run <code>expand_seeds.py</code> for real and skim the
+    output for paraphrases that drifted in meaning without tripping the retrieval check. Only after
+    that is B9's full draft run worth kicking off.
+  </p>
+</section>
+
+<section class="col" id="revision">
+  <div class="sec-head">
+    <p class="eyebrow">08 · Revision note</p>
+    <h2>What changed since this doc's first pass, same day</h2>
+  </div>
+  <p>
+    Rescanned the repo and updated this page in place. Since the first version: <code>build_dataset.py</code>
+    grew from one construction to four (<code>--construction answered|declined|mismatched|partial</code>),
+    <code>declined_seeds.yaml</code> (13 questions) landed for construction #2, and <code>expand_seeds.py</code>
+    was written for B8. None of the three has been executed to completion yet, so B7 and B8 moved from
+    <span class="pill p-code">not started</span> to <span class="pill p-wired">wired</span> — a distinct
+    state from <span class="pill p-pass">done</span>, which stays reserved for “ran, and its output exists on disk.”
+  </p>
+  <p>
+    Also since the first pass: <code>app/retrieval.py</code> was extracted from <code>api/ask.py</code>,
+    adding multi-segment search for long narrative questions (a 1,200-character case narrative embeds as
+    one diluted vector otherwise). Every fixed-length eval case and seed question is short enough to take
+    the unchanged single-query path, so this doesn't move Stage A's baseline or Stage B's drafts — it's
+    noted here only because <code>build_dataset.py</code> and <code>run_eval.py</code> now both import
+    <code>retrieve_chunks</code> from this shared module instead of calling <code>embed_texts</code> +
+    <code>search</code> directly.
+  </p>
+</section>
+
+</main>
+
+<footer class="col">
+  Generated 29 July 2026 from the repo state at commit <code>2129869</code> plus untracked work in
+  <code>backend/training/</code>. Full staged plan: <code>ok-we-want-to-fluffy-candy.md</code>.
+</footer>
+
+</body>
+</html>

@@ -7,12 +7,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.config import settings
-from app.embedding_client import embed_texts
 from app.generation import build_prompt, find_invalid_citations
 from app.llm_client import get_completion, stream_completion
 from app.model_registry import ModelVersion, load_model
 from app.prompt_registry import PromptVersion, load_prompt
-from app.vector_store import search
+from app.retrieval import embed_query, retrieve_chunks, search_query
 
 router = APIRouter()
 
@@ -71,8 +70,7 @@ def _build_sources(chunks: list[dict]) -> list[Source]:
 
 @router.post("/ask")
 async def ask(request: AskRequest) -> AskResponse:
-    [vector] = await embed_texts([request.question])
-    chunks = await search(vector, limit=request.limit)
+    chunks = await retrieve_chunks(request.question, limit=request.limit)
 
     if not chunks or chunks[0]["score"] < settings.min_relevance_score:
         return AskResponse(
@@ -81,6 +79,8 @@ async def ask(request: AskRequest) -> AskResponse:
         )
 
     prompt_version, model_version, generation = _resolve(request)
+    # The *full* question goes to the model, never the segmented form. Segmenting
+    # decides what to retrieve; the model still needs every fact to reason about.
     prompt = build_prompt(request.question, chunks, prompt_version)
     answer = await get_completion(prompt, generation, model=model_version.model)
     invalid_citations = find_invalid_citations(answer, len(chunks))
@@ -102,10 +102,10 @@ def _sse(event: str, data: dict) -> str:
 
 async def _ask_stream_events(request: AskRequest) -> AsyncIterator[str]:
     yield _sse("stage", {"stage": "embedding"})
-    [vector] = await embed_texts([request.question])
+    vectors = await embed_query(request.question)
 
     yield _sse("stage", {"stage": "searching"})
-    chunks = await search(vector, limit=request.limit)
+    chunks = await search_query(vectors, limit=request.limit)
 
     if not chunks or chunks[0]["score"] < settings.min_relevance_score:
         yield _sse(
