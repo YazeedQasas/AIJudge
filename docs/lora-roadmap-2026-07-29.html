@@ -431,6 +431,13 @@
     is untouched.
   </p>
 
+  <p class="pull">
+    <strong>Whether Stage C actually gets built is TBD.</strong> This LoRA track is a learning
+    exercise, not a product fix (see the re-scope above — the measured gap on the current objective
+    is ~0). C1–C10 stay <span class="pill p-code">planned</span> below as the path if it continues,
+    but there's no commitment yet to carry it through training and serving.
+  </p>
+
   <div class="stage">
     <span class="stage-id">C2</span>
     <div class="stage-body"><p><strong>token_stats.py</strong> — tokenize every prompt+answer, print p50/p90/p95/max. Sets <code>max_seq_length</code> from the real data, not a guess — each example carries ~2,500 chars of Arabic retrieval context before the question even starts.</p></div>

@@ -69,9 +69,14 @@ def _variant_kind(original_kind: str, slot: int) -> str:
 
 
 async def expand_one(seed: dict) -> list[str]:
-    """Ask the local model for 3 paraphrases of one seed; return raw lines."""
+    """Ask the local model for 3 paraphrases of one seed; return raw lines.
+
+    declined_seeds.yaml has no `kind` field (every entry is the same flavor -
+    an omitted-figure question), so it defaults to "definitional" there.
+    """
+    kind = seed.get("kind", "definitional")
     prompt = _PROMPT.format(
-        question=seed["question"], third_instruction=_THIRD_FOR_KIND[seed["kind"]]
+        question=seed["question"], third_instruction=_THIRD_FOR_KIND[kind]
     )
     raw = await get_completion(prompt, {"temperature": 0.7}, model=settings.lm_studio_model)
     lines = [line.strip().lstrip("123.-) ").strip() for line in raw.strip().splitlines() if line.strip()]
@@ -128,7 +133,7 @@ async def main() -> None:
                 {
                     "id": f"{seed['id']}-x{slot}",
                     "source_doc": seed["source_doc"],
-                    "kind": _variant_kind(seed["kind"], slot),
+                    "kind": _variant_kind(seed.get("kind", "definitional"), slot),
                     "question": question,
                 }
             )

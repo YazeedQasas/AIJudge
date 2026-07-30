@@ -38,3 +38,4 @@ backend/training/tools/
 backend/training/data/*/drafts.jsonl
 backend/training/data/*/auto_rejected.*.jsonl
 backend/training/data/*/expanded_questions.yaml
+backend/training/data/*/expanded_declined_questions.yaml
